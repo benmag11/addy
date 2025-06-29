@@ -80,5 +80,3 @@ Copy `.env.local.example` to `.env.local` and configure before using database fe
 ## Testing Strategy
 
 When making visual changes, always run `npm run visual-test` to capture screenshots and `npm run test-wrapping` to validate text layout behavior. The automated testing system helps maintain design consistency across responsive breakpoints.
-
-Logo sizing has been a critical issue - avoid making dramatic size changes without testing across multiple screen sizes first.

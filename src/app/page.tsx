@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -30,12 +31,14 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
-            <button 
-              className="text-white px-6 py-3 rounded-lg transition-colors font-sf-pro font-medium w-44 text-base"
-              style={{ backgroundColor: '#0275DE' }}
-            >
-              Sign up
-            </button>
+            <Link href="/signup">
+              <button 
+                className="text-white px-6 py-3 rounded-lg transition-colors font-sf-pro font-medium w-44 text-base"
+                style={{ backgroundColor: '#0275DE' }}
+              >
+                Sign up
+              </button>
+            </Link>
             <a 
               href="#" 
               className="px-6 py-3 rounded-lg transition-colors font-sf-pro text-blue-600 hover:text-blue-700 text-base"
@@ -62,12 +65,14 @@ export default function Home() {
                 (It definitely can.)
               </p>
               <div className="flex items-center gap-4 pt-6">
-                <button 
-                  className="text-white px-7 py-3.5 rounded-lg transition-colors text-base lg:text-lg font-sf-pro font-medium w-44 lg:w-48"
-                  style={{ backgroundColor: '#0275DE' }}
-                >
-                  Sign up
-                </button>
+                <Link href="/signup">
+                  <button 
+                    className="text-white px-7 py-3.5 rounded-lg transition-colors text-base lg:text-lg font-sf-pro font-medium w-44 lg:w-48"
+                    style={{ backgroundColor: '#0275DE' }}
+                  >
+                    Sign up
+                  </button>
+                </Link>
                 <a 
                   href="#" 
                   className="px-6 py-3 rounded-lg transition-colors text-base lg:text-lg font-sf-pro text-blue-600 hover:text-blue-700"
