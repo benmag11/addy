@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,44 @@ export default function SignUpPage() {
   const [verificationCode, setVerificationCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resendCountdown, setResendCountdown] = useState(0)
+  const [canResend, setCanResend] = useState(false)
+  const [timerInitialized, setTimerInitialized] = useState(false)
+
+  // Start countdown timer when verification step begins
+  useEffect(() => {
+    if (step === 'verify' && !timerInitialized) {
+      setResendCountdown(60)
+      setCanResend(false)
+      setTimerInitialized(true)
+    } else if (step !== 'verify') {
+      // Reset timer state when leaving verification step
+      setTimerInitialized(false)
+      setResendCountdown(0)
+      setCanResend(false)
+    }
+  }, [step, timerInitialized])
+
+  // Countdown timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (resendCountdown > 0) {
+      interval = setInterval(() => {
+        setResendCountdown((prev) => {
+          if (prev <= 1) {
+            setCanResend(true)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [resendCountdown])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,17 +74,20 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      const result = await signUpWithEmail({ email, password })
-      
-      if (!result.success) {
-        setError(formatAuthError(result.error as AuthError))
-        return
-      }
+      setLoading(true)
+      setError(null)
 
-      // Move to verification step
-      setStep('verify')
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.')
+      const result = await signUpWithEmail({ email, password })
+
+      if (!result.success) {
+        console.error('Sign-up failed:', result.error)
+        setError(result.error)
+      } else {
+        setNeedsVerification(true)
+      }
+    } catch (error) {
+        console.error('An unexpected error occurred during sign-up:', error)
+        setError({ message: 'An unexpected error occurred. Please try again.' })
     } finally {
       setLoading(false)
     }
@@ -81,6 +122,8 @@ export default function SignUpPage() {
   }
 
   const handleResendCode = async () => {
+    if (!canResend || loading) return
+    
     setError(null)
     setLoading(true)
 
@@ -95,6 +138,11 @@ export default function SignUpPage() {
       // Show success message briefly
       setError('Verification code sent!')
       setTimeout(() => setError(null), 3000)
+      
+      // Restart countdown timer after successful resend
+      setResendCountdown(60)
+      setCanResend(false)
+      setTimerInitialized(true)
     } catch (err) {
       setError('Failed to resend code. Please try again.')
     } finally {
@@ -247,10 +295,14 @@ export default function SignUpPage() {
               <button
                 type="button"
                 onClick={handleResendCode}
-                disabled={loading}
-                className="w-full text-gray-600 hover:text-gray-800 transition-colors font-sf-pro text-sm py-2"
+                disabled={!canResend || loading}
+                className={`w-full transition-colors font-sf-pro text-sm py-2 ${
+                  canResend && !loading 
+                    ? 'text-blue-600 hover:text-blue-800' 
+                    : 'text-gray-400 cursor-not-allowed'
+                }`}
               >
-                Resend in 25s
+                {loading ? 'Sending...' : canResend ? 'Resend code' : `Resend in ${resendCountdown}s`}
               </button>
             </form>
           )}
