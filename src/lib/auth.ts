@@ -46,6 +46,13 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
     })
 
     if (error) {
+      if (error.message.includes('User already registered')) {
+        return { 
+          success: true, 
+          needsEmailVerification: true, // Pretend success to prevent user enumeration
+          message: 'Please check your email for a verification link.'
+        }
+      }
       console.error('🚨 Supabase signUp error:', error)
       return { success: false, error: { message: error.message, code: error.message } }
     }
@@ -208,8 +215,17 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (password.length < 6) {
-    return { valid: false, message: 'Password must be at least 6 characters long' }
+  if (password.length < 8) {
+    return { valid: false, message: 'Password must be at least 8 characters long' }
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one lowercase letter' }
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one uppercase letter' }
+  }
+  if (!/\d/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one number' }
   }
   return { valid: true }
 }
