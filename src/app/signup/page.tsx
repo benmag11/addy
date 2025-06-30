@@ -74,20 +74,30 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      setLoading(true)
-      setError(null)
-
+      console.log('🚀 Starting signup process for:', email)
       const result = await signUpWithEmail({ email, password })
-
+      
+      console.log('📋 Signup result:', {
+        success: result.success,
+        data: result.data,
+        needsEmailVerification: result.needsEmailVerification,
+        error: result.error
+      })
+      
       if (!result.success) {
-        console.error('Sign-up failed:', result.error)
-        setError(result.error)
-      } else {
-        setNeedsVerification(true)
+        console.error('❌ Signup failed:', result.error)
+        setError(formatAuthError(result.error as AuthError))
+        return
       }
-    } catch (error) {
-        console.error('An unexpected error occurred during sign-up:', error)
-        setError({ message: 'An unexpected error occurred. Please try again.' })
+
+      console.log('✅ Signup successful, moving to verification step')
+      console.log('📧 Email verification needed:', result.needsEmailVerification)
+      
+      // Move to verification step
+      setStep('verify')
+    } catch (err) {
+      console.error('💥 Unexpected error during signup:', err)
+      setError('An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -128,13 +138,21 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
+      console.log('🔄 Attempting to resend verification email to:', email)
       const result = await resendVerificationEmail(email)
       
+      console.log('📧 Resend result:', {
+        success: result.success,
+        error: result.error
+      })
+      
       if (!result.success) {
+        console.error('❌ Resend failed:', result.error)
         setError(formatAuthError(result.error as AuthError))
         return
       }
 
+      console.log('✅ Resend successful')
       // Show success message briefly
       setError('Verification code sent!')
       setTimeout(() => setError(null), 3000)
@@ -144,6 +162,7 @@ export default function SignUpPage() {
       setCanResend(false)
       setTimerInitialized(true)
     } catch (err) {
+      console.error('💥 Unexpected error during resend:', err)
       setError('Failed to resend code. Please try again.')
     } finally {
       setLoading(false)

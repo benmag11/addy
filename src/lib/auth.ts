@@ -27,6 +27,8 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
       }
     }
 
+    console.log('🔧 Calling Supabase signUp with:', { email, password: '***' })
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -35,14 +37,28 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
       }
     })
 
+    console.log('📊 Supabase signUp response:', {
+      user: data.user,
+      session: data.session,
+      error: error,
+      userEmailConfirmed: data.user?.email_confirmed_at
+    })
+
     if (error) {
+      console.error('🚨 Supabase signUp error:', error)
       return { success: false, error: { message: error.message, code: error.message } }
     }
+
+    const needsVerification = !data.user?.email_confirmed_at
+    console.log('🔍 Email verification status:', {
+      emailConfirmedAt: data.user?.email_confirmed_at,
+      needsVerification: needsVerification
+    })
 
     return { 
       success: true, 
       data: data.user,
-      needsEmailVerification: !data.user?.email_confirmed_at
+      needsEmailVerification: needsVerification
     }
   } catch (error) {
     return { 
@@ -95,15 +111,21 @@ export async function resendVerificationEmail(email: string) {
       }
     }
 
+    console.log('🔧 Calling Supabase resend for email:', email)
+    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email
     })
 
+    console.log('📧 Supabase resend response:', { error })
+
     if (error) {
+      console.error('🚨 Supabase resend error:', error)
       return { success: false, error: { message: error.message } }
     }
 
+    console.log('✅ Supabase resend successful')
     return { success: true }
   } catch (error) {
     return { 
