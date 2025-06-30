@@ -71,11 +71,26 @@ The layout uses a mobile-first approach with specific breakpoints:
 - Character image and logo are PNG files with transparent backgrounds
 
 ### Supabase Integration
-The project is configured for Supabase but requires environment variables:
+The project is configured for Supabase with full SSR support and requires environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL` (for OAuth redirects)
 
 Copy `.env.local.example` to `.env.local` and configure before using database features.
+
+#### Authentication Features
+- **Email/Password Signup**: Traditional email verification workflow with countdown timer
+- **Google OAuth**: One-click sign-up with Google accounts
+- **Account Linking**: Automatic linking when same email used across auth methods
+- **Session Management**: SSR-compatible session handling with middleware
+- **Error Handling**: Comprehensive error states for all auth scenarios
+
+#### OAuth Configuration
+To enable Google OAuth:
+1. Configure Google provider in Supabase dashboard (Authentication > Providers)
+2. Add Google OAuth credentials from Google Cloud Console
+3. Set redirect URI: `https://vsxdjehicwpvwpbcksdd.supabase.co/auth/v1/callback`
+4. Test using `node scripts/puppeteer/test-google-oauth.js`
 
 ## Testing Strategy
 

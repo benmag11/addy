@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signUpWithEmail, verifyEmail, resendVerificationEmail, validateEmail, validatePassword, formatAuthError, type AuthError } from '@/lib/auth'
+import { signUpWithEmail, verifyEmail, resendVerificationEmail, signInWithGoogle, validateEmail, validatePassword, formatAuthError, type AuthError } from '@/lib/auth'
 
 type FormStep = 'signup' | 'verify'
 
@@ -19,6 +19,22 @@ export default function SignUpPage() {
   const [resendCountdown, setResendCountdown] = useState(0)
   const [canResend, setCanResend] = useState(false)
   const [timerInitialized, setTimerInitialized] = useState(false)
+
+  // Check for OAuth errors in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const oauthError = urlParams.get('error')
+    
+    if (oauthError) {
+      console.error('OAuth error from callback:', oauthError)
+      setError(oauthError)
+      
+      // Clean up URL without the error parameter
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('error')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [])
 
   // Start countdown timer when verification step begins
   useEffect(() => {
@@ -169,6 +185,31 @@ export default function SignUpPage() {
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    if (loading) return
+    
+    setError(null)
+    setLoading(true)
+
+    try {
+      console.log('🚀 Starting Google OAuth sign-in')
+      const result = await signInWithGoogle()
+      
+      if (!result.success) {
+        console.error('❌ Google OAuth failed:', result.error)
+        setError(formatAuthError(result.error as AuthError))
+        return
+      }
+
+      console.log('✅ Google OAuth initiated - redirecting to Google')
+      // The OAuth flow will handle the redirect automatically
+    } catch (err) {
+      console.error('💥 Unexpected error during Google sign-in:', err)
+      setError('Failed to sign in with Google. Please try again.')
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}
@@ -197,10 +238,12 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          {/* Google Sign In Button (Visual Only) */}
+          {/* Google Sign In Button */}
           <button 
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors mb-4 font-sf-pro text-sm"
-            disabled
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors mb-4 font-sf-pro text-sm disabled:opacity-50"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

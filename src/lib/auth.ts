@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { createClient } from '@/utils/supabase/client'
 
 export interface AuthError {
   message: string
@@ -29,6 +29,7 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
 
     console.log('🔧 Calling Supabase signUp with:', { email, password: '***' })
     
+    const supabase = createClient()
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -80,6 +81,7 @@ export async function verifyEmail({ email, token }: VerifyData) {
       }
     }
 
+    const supabase = createClient()
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -113,6 +115,7 @@ export async function resendVerificationEmail(email: string) {
 
     console.log('🔧 Calling Supabase resend for email:', email)
     
+    const supabase = createClient()
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email
@@ -135,6 +138,44 @@ export async function resendVerificationEmail(email: string) {
   }
 }
 
+// Sign in with Google OAuth
+export async function signInWithGoogle() {
+  try {
+    // Check if Supabase is properly configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+      return { 
+        success: false, 
+        error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
+      }
+    }
+
+    console.log('🔧 Starting Google OAuth sign-in')
+    
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      }
+    })
+
+    if (error) {
+      console.error('🚨 Google OAuth error:', error)
+      return { success: false, error: { message: error.message } }
+    }
+
+    console.log('✅ Google OAuth initiated successfully')
+    return { success: true, data }
+  } catch (error) {
+    console.error('💥 Unexpected error during Google sign-in:', error)
+    return { 
+      success: false, 
+      error: { message: 'Failed to sign in with Google. Please try again.' } 
+    }
+  }
+}
+
 // Validation helpers
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -146,6 +187,31 @@ export function validatePassword(password: string): { valid: boolean; message?: 
     return { valid: false, message: 'Password must be at least 6 characters long' }
   }
   return { valid: true }
+}
+
+// Check if user already exists with given email
+export async function checkUserExists(email: string) {
+  try {
+    const supabase = createClient()
+    
+    // This will trigger a password reset email if user exists
+    // but won't create a new user or expose if email exists
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+    })
+    
+    // Supabase doesn't expose whether email exists for security
+    // so we return a generic response
+    return { 
+      success: true, 
+      message: 'If an account exists with this email, you will receive instructions.' 
+    }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { message: 'Unable to check account status. Please try again.' } 
+    }
+  }
 }
 
 // Format error messages for display
@@ -161,8 +227,16 @@ export function formatAuthError(error: AuthError): string {
     case 'email_address_not_authorized':
       return 'This email address is not authorized to sign up'
     case 'user_already_exists':
-      return 'An account with this email already exists'
+      return 'An account with this email already exists. Try signing in instead.'
+    case 'invalid_credentials':
+      return 'Invalid email or password'
+    case 'too_many_requests':
+      return 'Too many requests. Please try again later.'
+    case 'oauth_error':
+      return 'Authentication failed. Please try again.'
+    case 'access_denied':
+      return 'Access was denied. Please try again.'
     default:
-      return error.message || 'An error occurred during sign up'
+      return error.message || 'An error occurred during authentication'
   }
 }
