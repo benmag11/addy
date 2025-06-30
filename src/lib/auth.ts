@@ -15,19 +15,25 @@ export interface VerifyData {
   token: string
 }
 
+// Helper function to validate Supabase configuration
+function validateSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+    return { 
+      success: false, 
+      error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
+    }
+  }
+  return { success: true }
+}
+
 // Sign up with email and password
 export async function signUpWithEmail({ email, password }: SignUpData) {
   try {
-    // Check if Supabase is properly configured
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-      return { 
-        success: false, 
-        error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
-      }
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
     }
-
-    console.log('🔧 Calling Supabase signUp with:', { email, password: '***' })
     
     const supabase = createClient()
     const { data, error } = await supabase.auth.signUp({
@@ -38,30 +44,18 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
       }
     })
 
-    console.log('📊 Supabase signUp response:', {
-      user: data.user,
-      session: data.session,
-      error: error,
-      userEmailConfirmed: data.user?.email_confirmed_at
-    })
-
     if (error) {
       if (error.message.includes('User already registered')) {
         return { 
           success: true, 
-          needsEmailVerification: true, // Pretend success to prevent user enumeration
+          needsEmailVerification: true,
           message: 'Please check your email for a verification link.'
         }
       }
-      console.error('🚨 Supabase signUp error:', error)
       return { success: false, error: { message: error.message, code: error.message } }
     }
 
     const needsVerification = !data.user?.email_confirmed_at
-    console.log('🔍 Email verification status:', {
-      emailConfirmedAt: data.user?.email_confirmed_at,
-      needsVerification: needsVerification
-    })
 
     return { 
       success: true, 
@@ -79,13 +73,9 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
 // Verify email with OTP code
 export async function verifyEmail({ email, token }: VerifyData) {
   try {
-    // Check if Supabase is properly configured
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-      return { 
-        success: false, 
-        error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
-      }
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
     }
 
     const supabase = createClient()
@@ -111,16 +101,10 @@ export async function verifyEmail({ email, token }: VerifyData) {
 // Resend verification email
 export async function resendVerificationEmail(email: string) {
   try {
-    // Check if Supabase is properly configured
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-      return { 
-        success: false, 
-        error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
-      }
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
     }
-
-    console.log('🔧 Calling Supabase resend for email:', email)
     
     const supabase = createClient()
     const { error } = await supabase.auth.resend({
@@ -128,14 +112,10 @@ export async function resendVerificationEmail(email: string) {
       email
     })
 
-    console.log('📧 Supabase resend response:', { error })
-
     if (error) {
-      console.error('🚨 Supabase resend error:', error)
       return { success: false, error: { message: error.message } }
     }
 
-    console.log('✅ Supabase resend successful')
     return { success: true }
   } catch (error) {
     return { 
@@ -148,16 +128,10 @@ export async function resendVerificationEmail(email: string) {
 // Sign in with Google OAuth
 export async function signInWithGoogle() {
   try {
-    // Check if Supabase is properly configured
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-      return { 
-        success: false, 
-        error: { message: 'Authentication service not configured. Please set up Supabase environment variables.' } 
-      }
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
     }
-
-    console.log('🔧 Starting Google OAuth sign-in')
     
     const supabase = createClient()
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -168,14 +142,11 @@ export async function signInWithGoogle() {
     })
 
     if (error) {
-      console.error('🚨 Google OAuth error:', error)
       return { success: false, error: { message: error.message } }
     }
 
-    console.log('✅ Google OAuth initiated successfully')
     return { success: true, data }
   } catch (error) {
-    console.error('💥 Unexpected error during Google sign-in:', error)
     return { 
       success: false, 
       error: { message: 'Failed to sign in with Google. Please try again.' } 
@@ -186,6 +157,11 @@ export async function signInWithGoogle() {
 // Sign in with email and password
 export async function signInWithEmailPassword({ email, password }: SignUpData) {
   try {
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
+    }
+
     const supabase = createClient()
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -193,18 +169,46 @@ export async function signInWithEmailPassword({ email, password }: SignUpData) {
     })
 
     if (error) {
-      console.error('🚨 Supabase signIn error:', error)
       return { success: false, error: { message: error.message, code: error.code } }
     }
 
-    console.log('✅ Supabase signIn successful for user:', data.user?.email)
     return { success: true, data }
   } catch (error) {
-    console.error('💥 Unexpected error during sign-in:', error)
     return {
       success: false,
       error: { message: 'An unexpected error occurred. Please try again.' },
     }
+  }
+}
+
+// Check if email already exists in the system
+export async function checkEmailExists(email: string) {
+  try {
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return { exists: false, success: false }
+    }
+    
+    const supabase = createClient()
+    // Use sign-in attempt with known invalid password to check user existence
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: 'invalid-password-for-existence-check-12345'
+    })
+    
+    // If error contains "Invalid login credentials", user exists but password is wrong
+    // If error contains "User not found" or similar, user doesn't exist
+    const exists = error?.message?.includes('Invalid login credentials') || 
+                   error?.message?.includes('Email not confirmed') ||
+                   false
+    
+    return {
+      exists,
+      success: true
+    }
+  } catch (error) {
+    // On any error, assume email doesn't exist (graceful degradation)
+    return { exists: false, success: false }
   }
 }
 
@@ -218,41 +222,7 @@ export function validatePassword(password: string): { valid: boolean; message?: 
   if (password.length < 8) {
     return { valid: false, message: 'Password must be at least 8 characters long' }
   }
-  if (!/[a-z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one lowercase letter' }
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one uppercase letter' }
-  }
-  if (!/\d/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one number' }
-  }
   return { valid: true }
-}
-
-// Check if user already exists with given email
-export async function checkUserExists(email: string) {
-  try {
-    const supabase = createClient()
-    
-    // This will trigger a password reset email if user exists
-    // but won't create a new user or expose if email exists
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-    })
-    
-    // Supabase doesn't expose whether email exists for security
-    // so we return a generic response
-    return { 
-      success: true, 
-      message: 'If an account exists with this email, you will receive instructions.' 
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: { message: 'Unable to check account status. Please try again.' } 
-    }
-  }
 }
 
 // Format error messages for display

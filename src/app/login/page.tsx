@@ -18,7 +18,6 @@ export default function LoginPage() {
     const oauthError = urlParams.get('error')
     
     if (oauthError) {
-      console.error('OAuth error from callback:', oauthError)
       setError(oauthError)
       
       const newUrl = new URL(window.location.href)
@@ -42,7 +41,7 @@ export default function LoginPage() {
       const result = await signInWithEmailPassword({ email, password })
       
       if (!result.success) {
-        setError(formatAuthError(result.error as AuthError))
+        setError('error' in result && result.error ? formatAuthError(result.error as AuthError) : 'Authentication failed')
         return
       }
 
@@ -64,7 +63,7 @@ export default function LoginPage() {
       const result = await signInWithGoogle()
       
       if (!result.success) {
-        setError(formatAuthError(result.error as AuthError))
+        setError('error' in result && result.error ? formatAuthError(result.error as AuthError) : 'Authentication failed')
         return
       }
     } catch (err) {
@@ -168,7 +167,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-xs text-gray-500 mt-6 text-center font-sf-pro">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-blue-600 hover:underline">
               Sign up
             </Link>
