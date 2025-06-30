@@ -17,9 +17,11 @@ export default function Header() {
           </Link>
         </div>
         <div className="flex items-center space-x-3 md:space-x-4">
-          <button className="text-gray-600 hover:text-gray-900 transition-colors text-sm md:text-base font-sf-pro font-medium">
-            Log In
-          </button>
+          <Link href="/login">
+            <button className="text-gray-600 hover:text-gray-900 transition-colors text-sm md:text-base font-sf-pro font-medium">
+              Log In
+            </button>
+          </Link>
           <Link href="/signup">
             <button className="bg-black text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-sm md:text-base font-sf-pro font-medium">
               Sign Up

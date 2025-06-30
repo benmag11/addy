@@ -176,6 +176,31 @@ export async function signInWithGoogle() {
   }
 }
 
+// Sign in with email and password
+export async function signInWithEmailPassword({ email, password }: SignUpData) {
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      console.error('🚨 Supabase signIn error:', error)
+      return { success: false, error: { message: error.message, code: error.code } }
+    }
+
+    console.log('✅ Supabase signIn successful for user:', data.user?.email)
+    return { success: true, data }
+  } catch (error) {
+    console.error('💥 Unexpected error during sign-in:', error)
+    return {
+      success: false,
+      error: { message: 'An unexpected error occurred. Please try again.' },
+    }
+  }
+}
+
 // Validation helpers
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
