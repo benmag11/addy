@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signUpWithEmail, verifyEmail, resendVerificationEmail, signInWithGoogle, checkEmailExists, validateEmail, validatePassword, formatAuthError, type AuthError } from '@/lib/auth'
+import { signUpWithEmail, verifyEmail, resendVerificationEmail, signInWithGoogle, validateEmail, validatePassword, formatAuthError, type AuthError } from '@/lib/auth'
 
 type FormStep = 'signup' | 'verify'
 
-type EmailCheckStatus = 'idle' | 'checking' | 'exists' | 'available'
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -22,9 +21,6 @@ export default function SignUpPage() {
   const [canResend, setCanResend] = useState(false)
   const [timerInitialized, setTimerInitialized] = useState(false)
   
-  // Email existence checking state
-  const [emailCheckStatus, setEmailCheckStatus] = useState<EmailCheckStatus>('idle')
-  const [emailCheckDebounceTimer, setEmailCheckDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
   // Check for OAuth errors in URL parameters
   useEffect(() => {
@@ -55,16 +51,6 @@ export default function SignUpPage() {
     }
   }, [step, timerInitialized])
 
-  // Reset email check status when step changes
-  useEffect(() => {
-    if (step !== 'signup') {
-      setEmailCheckStatus('idle')
-      if (emailCheckDebounceTimer) {
-        clearTimeout(emailCheckDebounceTimer)
-        setEmailCheckDebounceTimer(null)
-      }
-    }
-  }, [step, emailCheckDebounceTimer])
 
   // Countdown timer logic
   useEffect(() => {
@@ -87,60 +73,7 @@ export default function SignUpPage() {
     }
   }, [resendCountdown])
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (emailCheckDebounceTimer) {
-        clearTimeout(emailCheckDebounceTimer)
-      }
-    }
-  }, [emailCheckDebounceTimer])
 
-  // Debounced email existence check
-  const checkEmailExistence = async (emailToCheck: string) => {
-    // Clear any existing timer
-    if (emailCheckDebounceTimer) {
-      clearTimeout(emailCheckDebounceTimer)
-    }
-
-    // Reset status if email is empty or invalid
-    if (!emailToCheck.trim() || !validateEmail(emailToCheck)) {
-      setEmailCheckStatus('idle')
-      setEmailCheckDebounceTimer(null)
-      return
-    }
-
-    // Set up new debounced check
-    const timer = setTimeout(async () => {
-      // Double-check that we're still on the signup step and email hasn't changed
-      if (step !== 'signup' || email !== emailToCheck) {
-        return
-      }
-
-      setEmailCheckStatus('checking')
-      
-      try {
-        const result = await checkEmailExists(emailToCheck)
-        
-        // Final check to ensure we're still on the right step and email hasn't changed
-        if (step === 'signup' && email === emailToCheck) {
-          if (result.success) {
-            setEmailCheckStatus(result.exists ? 'exists' : 'available')
-          } else {
-            // On error, silently set to idle (graceful degradation)
-            setEmailCheckStatus('idle')
-          }
-        }
-      } catch (error) {
-        // On any error, silently set to idle (only if we're still on the same email)
-        if (step === 'signup' && email === emailToCheck) {
-          setEmailCheckStatus('idle')
-        }
-      }
-    }, 500) // 500ms debounce
-
-    setEmailCheckDebounceTimer(timer)
-  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -324,11 +257,7 @@ export default function SignUpPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    checkEmailExistence(e.target.value)
-                  }}
-                  onBlur={(e) => checkEmailExistence(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sf-pro text-sm"
                   placeholder="Enter your email"
                   required
@@ -351,44 +280,39 @@ export default function SignUpPage() {
                 />
               </div>
 
-              {/* Existing User Message */}
-              {emailCheckStatus === 'exists' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-4 w-4 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-2">
-                      <p className="text-sm text-blue-800 font-sf-pro">
-                        Looks like you already have an account with this email.
-                      </p>
-                      <Link 
-                        href="/login" 
-                        className="text-sm font-medium text-blue-600 hover:text-blue-500 font-sf-pro inline-flex items-center mt-1"
-                      >
-                        Sign in instead
-                        <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {/* Checking Status */}
-              {emailCheckStatus === 'checking' && (
-                <div className="flex items-center text-sm text-gray-500 font-sf-pro">
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
-                  Checking email...
-                </div>
-              )}
 
               {/* Error Message */}
               {error && (
-                <p className="text-red-500 text-sm font-sf-pro">{error}</p>
+                <div className="text-sm font-sf-pro">
+                  {error.includes('already exists') ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <svg className="h-4 w-4 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-2">
+                          <p className="text-sm text-blue-800 font-sf-pro">
+                            An account with this email already exists.
+                          </p>
+                          <Link 
+                            href={`/login?email=${encodeURIComponent(email)}`} 
+                            className="text-sm font-medium text-blue-600 hover:text-blue-500 font-sf-pro inline-flex items-center mt-1"
+                          >
+                            Sign in instead
+                            <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-red-500">{error}</p>
+                  )}
+                </div>
               )}
 
               {/* Continue Button */}

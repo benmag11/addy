@@ -45,14 +45,18 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
     })
 
     if (error) {
-      if (error.message.includes('User already registered')) {
-        return { 
-          success: true, 
-          needsEmailVerification: true,
-          message: 'Please check your email for a verification link.'
+      return { success: false, error: { message: error.message, code: error.message } }
+    }
+
+    // Check if user already exists using identities array method
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      return { 
+        success: false, 
+        error: { 
+          message: 'An account with this email already exists. Please sign in instead.', 
+          code: 'user_already_exists' 
         }
       }
-      return { success: false, error: { message: error.message, code: error.message } }
     }
 
     const needsVerification = !data.user?.email_confirmed_at
@@ -181,36 +185,6 @@ export async function signInWithEmailPassword({ email, password }: SignUpData) {
   }
 }
 
-// Check if email already exists in the system
-export async function checkEmailExists(email: string) {
-  try {
-    const configCheck = validateSupabaseConfig()
-    if (!configCheck.success) {
-      return { exists: false, success: false }
-    }
-    
-    const supabase = createClient()
-    // Use sign-in attempt with known invalid password to check user existence
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: 'invalid-password-for-existence-check-12345'
-    })
-    
-    // If error contains "Invalid login credentials", user exists but password is wrong
-    // If error contains "User not found" or similar, user doesn't exist
-    const exists = error?.message?.includes('Invalid login credentials') || 
-                   error?.message?.includes('Email not confirmed') ||
-                   false
-    
-    return {
-      exists,
-      success: true
-    }
-  } catch (error) {
-    // On any error, assume email doesn't exist (graceful degradation)
-    return { exists: false, success: false }
-  }
-}
 
 // Validation helpers
 export function validateEmail(email: string): boolean {
