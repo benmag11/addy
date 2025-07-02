@@ -1,39 +1,14 @@
 import { createClient } from '@/utils/supabase/client'
-
-export interface AuthError {
-  message: string
-  code?: string
-}
-
-export interface SignUpData {
-  email: string
-  password: string
-}
-
-export interface VerifyData {
-  email: string
-  token: string
-}
-
-export type YearOption = '1st year' | '2nd year' | '3rd year' | '4th year' | '5th year' | '6th year'
-
-export type SubjectLevel = 'higher' | 'ordinary'
-
-export interface Subject {
-  id: string
-  name: string
-  category: 'core' | 'language' | 'science' | 'humanities' | 'practical' | 'business'
-}
-
-export interface SelectedSubject {
-  subject: Subject
-  level: SubjectLevel
-}
-
-export interface ValidationResult {
-  valid: boolean
-  message?: string
-}
+import type { 
+  AuthError, 
+  SignUpData, 
+  VerifyData, 
+  YearOption, 
+  Subject, 
+  SelectedSubject, 
+  ValidationResult,
+  AuthResult
+} from '@/types'
 
 // Irish Leaving Certificate subjects
 export const LEAVING_CERT_SUBJECTS: Subject[] = [
@@ -81,7 +56,7 @@ export const LEAVING_CERT_SUBJECTS: Subject[] = [
 ]
 
 // Helper function to validate Supabase configuration
-function validateSupabaseConfig() {
+function validateSupabaseConfig(): { success: boolean; error?: AuthError } {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
     return { 
@@ -93,7 +68,7 @@ function validateSupabaseConfig() {
 }
 
 // Sign up with email and password
-export async function signUpWithEmail({ email, password }: SignUpData) {
+export async function signUpWithEmail({ email, password }: SignUpData): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -124,7 +99,14 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
       }
     }
 
-    const needsVerification = !data.user?.email_confirmed_at
+    if (!data.user) {
+      return {
+        success: false,
+        error: { message: 'Failed to create user account. Please try again.' }
+      }
+    }
+
+    const needsVerification = !data.user.email_confirmed_at
 
     return { 
       success: true, 
@@ -140,7 +122,7 @@ export async function signUpWithEmail({ email, password }: SignUpData) {
 }
 
 // Verify email with OTP code
-export async function verifyEmail({ email, token }: VerifyData) {
+export async function verifyEmail({ email, token }: VerifyData): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -158,6 +140,13 @@ export async function verifyEmail({ email, token }: VerifyData) {
       return { success: false, error: { message: error.message, code: error.message } }
     }
 
+    if (!data.user) {
+      return {
+        success: false,
+        error: { message: 'Failed to verify email. Please try again.' }
+      }
+    }
+
     return { success: true, data: data.user }
   } catch (error) {
     return { 
@@ -168,7 +157,7 @@ export async function verifyEmail({ email, token }: VerifyData) {
 }
 
 // Resend verification email
-export async function resendVerificationEmail(email: string) {
+export async function resendVerificationEmail(email: string): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -195,7 +184,7 @@ export async function resendVerificationEmail(email: string) {
 }
 
 // Sign in with Google OAuth
-export async function signInWithGoogle() {
+export async function signInWithGoogle(): Promise<AuthResult<{ provider: string; url: string } | null>> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -230,7 +219,7 @@ export async function signInWithGoogle() {
 }
 
 // Sign in with email and password
-export async function signInWithEmailPassword({ email, password }: SignUpData) {
+export async function signInWithEmailPassword({ email, password }: SignUpData): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -244,10 +233,21 @@ export async function signInWithEmailPassword({ email, password }: SignUpData) {
     })
 
     if (error) {
-      return { success: false, error: { message: error.message, code: error.code } }
+      const errorObj: AuthError = { message: error.message }
+      if (error.code) {
+        errorObj.code = error.code
+      }
+      return { success: false, error: errorObj }
     }
 
-    return { success: true, data }
+    if (!data.user) {
+      return {
+        success: false,
+        error: { message: 'Failed to sign in. Please try again.' }
+      }
+    }
+
+    return { success: true, data: data.user }
   } catch (error) {
     return {
       success: false,
@@ -299,7 +299,7 @@ export function validateYear(year: YearOption): ValidationResult {
 }
 
 // Save onboarding step data to user metadata
-export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }) {
+export async function saveOnboardingStep(_userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -332,7 +332,7 @@ export async function saveOnboardingStep(userId: string, data: { name?: string; 
 }
 
 // Complete the onboarding process
-export async function completeOnboarding(userId: string) {
+export async function completeOnboarding(_userId: string): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {

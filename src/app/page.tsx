@@ -33,16 +33,14 @@ export default function Home() {
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
             <Link href="/signup">
               <button 
-                className="text-white px-6 py-3 rounded-lg transition-colors font-sf-pro font-medium w-44 text-base"
-                style={{ backgroundColor: '#0275DE' }}
+                className="bg-addy-blue text-white px-6 py-3 rounded-lg transition-colors font-sf-pro font-medium w-44 text-base hover:opacity-90"
               >
                 Sign up
               </button>
             </Link>
             <a 
               href="#" 
-              className="px-6 py-3 rounded-lg transition-colors font-sf-pro text-blue-600 hover:text-blue-700 text-base"
-              style={{ backgroundColor: '#F2F9FF' }}
+              className="bg-addy-blue-light px-6 py-3 rounded-lg transition-colors font-sf-pro text-blue-600 hover:text-blue-700 text-base"
             >
               More about addy
             </a>
@@ -67,16 +65,14 @@ export default function Home() {
               <div className="flex items-center gap-4 pt-6">
                 <Link href="/signup">
                   <button 
-                    className="text-white px-7 py-3.5 rounded-lg transition-colors text-base lg:text-lg font-sf-pro font-medium w-44 lg:w-48"
-                    style={{ backgroundColor: '#0275DE' }}
+                    className="bg-addy-blue text-white px-7 py-3.5 rounded-lg transition-colors text-base lg:text-lg font-sf-pro font-medium w-44 lg:w-48 hover:opacity-90"
                   >
                     Sign up
                   </button>
                 </Link>
                 <a 
                   href="#" 
-                  className="px-6 py-3 rounded-lg transition-colors text-base lg:text-lg font-sf-pro text-blue-600 hover:text-blue-700"
-                  style={{ backgroundColor: '#F2F9FF' }}
+                  className="bg-addy-blue-light px-6 py-3 rounded-lg transition-colors text-base lg:text-lg font-sf-pro text-blue-600 hover:text-blue-700"
                 >
                   More about addy
                 </a>

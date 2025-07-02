@@ -1,8 +1,0 @@
-[
-  {
-    "content": "Audit Supabase RLS policies in dashboard for all tables",
-    "status": "pending",
-    "priority": "low",
-    "id": "rls-1"
-  }
-]

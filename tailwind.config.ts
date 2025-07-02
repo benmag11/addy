@@ -7,7 +7,15 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'addy-blue': '#0275DE',
+        'addy-blue-light': '#F2F9FF',
+      },
+      fontFamily: {
+        'sf-pro': ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Icons', 'system-ui', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 };

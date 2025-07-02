@@ -1,21 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import HeaderLogo from '@/components/ui/HeaderLogo'
+import { IMAGES, IMAGE_DIMENSIONS, ROUTES } from '@/constants'
 
 export default function WelcomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}
-      <header className="w-full py-4 px-6">
-        <Link href="/">
-          <Image 
-            src="/logo.png" 
-            alt="addy" 
-            width={120} 
-            height={60}
-            className="h-12 w-auto"
-          />
-        </Link>
-      </header>
+      <HeaderLogo />
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-6">
@@ -23,10 +15,10 @@ export default function WelcomePage() {
           {/* Character Image */}
           <div className="mb-8">
             <Image 
-              src="/character.png" 
+              src={IMAGES.CHARACTER} 
               alt="Character reading a book" 
-              width={200} 
-              height={200}
+              width={IMAGE_DIMENSIONS.CHARACTER.WELCOME.width} 
+              height={IMAGE_DIMENSIONS.CHARACTER.WELCOME.height}
               className="w-48 h-auto mx-auto"
             />
           </div>
@@ -42,9 +34,8 @@ export default function WelcomePage() {
 
           {/* Action Button */}
           <Link 
-            href="/"
-            className="inline-block text-white px-8 py-3 rounded-lg transition-colors font-sf-pro font-medium text-base"
-            style={{ backgroundColor: '#0275DE' }}
+            href={ROUTES.HOME}
+            className="inline-block bg-addy-blue text-white px-8 py-3 rounded-lg transition-colors font-sf-pro font-medium text-base hover:opacity-90"
           >
             Get Started
           </Link>

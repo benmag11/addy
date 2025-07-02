@@ -1,16 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Subject, SubjectLevel } from '@/lib/auth'
-
-interface SubjectCardProps {
-  subject: Subject
-  isSelected: boolean
-  selectedLevel?: SubjectLevel
-  onSelect: (subject: Subject, level: SubjectLevel) => void
-  onDeselect: (subjectId: string) => void
-  className?: string
-}
+import type { SubjectCardProps, SubjectLevel } from '@/types'
 
 export default function SubjectCard({ 
   subject, 
@@ -35,6 +26,8 @@ export default function SubjectCard({
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
+    
+    return undefined
   }, [isExpanded, isSelected])
 
   // Keep expanded if already selected

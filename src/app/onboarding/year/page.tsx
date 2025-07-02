@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { saveOnboardingStep, validateYear, type YearOption } from '@/lib/auth'
+import { saveOnboardingStep, validateYear } from '@/lib/auth'
+import type { YearOption, User } from '@/types'
 import OnboardingCard from '@/components/onboarding/OnboardingCard'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const YEAR_OPTIONS: { value: YearOption; description: string }[] = [
   { value: '1st year', description: 'Just starting your leaving certificate journey' },
@@ -20,7 +22,7 @@ export default function OnboardingYearPage() {
   const [selectedYear, setSelectedYear] = useState<YearOption | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Get current user on mount
   useEffect(() => {
@@ -77,12 +79,7 @@ export default function OnboardingYearPage() {
   }
 
   if (!user) {
-    return (
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="text-gray-500 mt-2 font-sf-pro">Loading...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return (
@@ -130,8 +127,7 @@ export default function OnboardingYearPage() {
       <button
         onClick={handleSubmit}
         disabled={loading || !selectedYear}
-        className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
-        style={{ backgroundColor: '#0275DE' }}
+        className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50 hover:opacity-90"
       >
         {loading ? 'Saving...' : 'Continue'}
       </button>

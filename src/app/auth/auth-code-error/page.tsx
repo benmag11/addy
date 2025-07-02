@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import HeaderLogo from '@/components/ui/HeaderLogo'
+import { ROUTES } from '@/constants'
 
 export default function AuthCodeErrorPage() {
   const searchParams = useSearchParams()
@@ -24,17 +25,7 @@ export default function AuthCodeErrorPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}
-      <header className="w-full py-4 px-6">
-        <Link href="/">
-          <Image 
-            src="/logo.png" 
-            alt="addy" 
-            width={120} 
-            height={60}
-            className="h-12 w-auto"
-          />
-        </Link>
-      </header>
+      <HeaderLogo />
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-6 py-8">
@@ -57,15 +48,14 @@ export default function AuthCodeErrorPage() {
           {/* Action Buttons */}
           <div className="space-y-4">
             <Link 
-              href="/signup"
-              className="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white font-sf-pro transition-colors"
-              style={{ backgroundColor: '#0275DE' }}
+              href={ROUTES.SIGNUP}
+              className="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg bg-addy-blue text-white font-sf-pro transition-colors hover:opacity-90"
             >
               Try Again
             </Link>
             
             <Link 
-              href="/login"
+              href={ROUTES.LOGIN}
               className="w-full inline-flex justify-center items-center px-4 py-3 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 font-sf-pro transition-colors"
             >
               Sign In Instead

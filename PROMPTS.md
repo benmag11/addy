@@ -13,4 +13,6 @@
     - **Sensitive Data Exposure:** Identify any hardcoded credentials, API keys, or personal data that is handled insecurely.
     - **Cross-Site Request Forgery (CSRF):** Ensure that state-changing requests require anti-CSRF tokens.
 
+2. Please explain the functionality and code you just built out in detail. Walk me through what you changed and how it works. Act like you’re a senior engineer teaching me code
+
 

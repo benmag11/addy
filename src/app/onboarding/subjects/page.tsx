@@ -3,10 +3,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { saveOnboardingStep, LEAVING_CERT_SUBJECTS, type Subject, type SelectedSubject, type SubjectLevel } from '@/lib/auth'
+import { saveOnboardingStep, LEAVING_CERT_SUBJECTS } from '@/lib/auth'
+import type { Subject, SelectedSubject, SubjectLevel, User } from '@/types'
 import SubjectCard from '@/components/onboarding/SubjectCard'
 import SelectedSubjectsSidebar from '@/components/onboarding/SelectedSubjectsSidebar'
 import SearchBar from '@/components/onboarding/SearchBar'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function OnboardingSubjectsPage() {
   const router = useRouter()
@@ -14,7 +16,7 @@ export default function OnboardingSubjectsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Get current user on mount
   useEffect(() => {
@@ -96,6 +98,8 @@ export default function OnboardingSubjectsPage() {
         window.removeEventListener('resize', handleScroll)
       }
     }
+    
+    return undefined
   }, [])
 
   const handleSubjectSelect = (subject: Subject, level: SubjectLevel) => {
@@ -153,12 +157,7 @@ export default function OnboardingSubjectsPage() {
   }
 
   if (!user) {
-    return (
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="text-gray-500 mt-2 font-sf-pro">Loading...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return (
@@ -200,16 +199,19 @@ export default function OnboardingSubjectsPage() {
               </p>
             </div>
           ) : (
-            filteredSubjects.map((subject) => (
-              <SubjectCard
-                key={subject.id}
-                subject={subject}
-                isSelected={isSubjectSelected(subject.id)}
-                selectedLevel={getSelectedLevel(subject.id)}
-                onSelect={handleSubjectSelect}
-                onDeselect={handleSubjectRemove}
-              />
-            ))
+            filteredSubjects.map((subject) => {
+              const level = getSelectedLevel(subject.id)
+              return (
+                <SubjectCard
+                  key={subject.id}
+                  subject={subject}
+                  isSelected={isSubjectSelected(subject.id)}
+                  {...(level && { selectedLevel: level })}
+                  onSelect={handleSubjectSelect}
+                  onDeselect={handleSubjectRemove}
+                />
+              )
+            })
           )}
         </div>
 
@@ -224,8 +226,7 @@ export default function OnboardingSubjectsPage() {
             <button
               onClick={handleSubmit}
               disabled={loading || selectedSubjects.length === 0}
-              className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
-              style={{ backgroundColor: '#0275DE' }}
+              className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50 hover:opacity-90"
             >
               {loading ? 'Saving...' : 'Continue'}
             </button>
@@ -266,16 +267,19 @@ export default function OnboardingSubjectsPage() {
                       </p>
                     </div>
                   ) : (
-                    filteredSubjects.map((subject) => (
-                      <SubjectCard
-                        key={subject.id}
-                        subject={subject}
-                        isSelected={isSubjectSelected(subject.id)}
-                        selectedLevel={getSelectedLevel(subject.id)}
-                        onSelect={handleSubjectSelect}
-                        onDeselect={handleSubjectRemove}
-                      />
-                    ))
+                    filteredSubjects.map((subject) => {
+                      const level = getSelectedLevel(subject.id)
+                      return (
+                        <SubjectCard
+                          key={subject.id}
+                          subject={subject}
+                          isSelected={isSubjectSelected(subject.id)}
+                          {...(level && { selectedLevel: level })}
+                          onSelect={handleSubjectSelect}
+                          onDeselect={handleSubjectRemove}
+                        />
+                      )
+                    })
                   )}
                 </div>
               </div>

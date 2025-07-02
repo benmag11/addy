@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signInWithEmailPassword, signInWithGoogle, validateEmail, formatAuthError, type AuthError } from '@/lib/auth'
+import { signInWithEmailPassword, signInWithGoogle, validateEmail, formatAuthError } from '@/lib/auth'
+import type { AuthError } from '@/types'
+import HeaderLogo from '@/components/ui/HeaderLogo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -74,17 +75,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="w-full py-4 px-6">
-        <Link href="/">
-          <Image 
-            src="/logo.png" 
-            alt="addy" 
-            width={120} 
-            height={60}
-            className="h-12 w-auto"
-          />
-        </Link>
-      </header>
+      <HeaderLogo />
 
       <div className="flex-1 flex items-center justify-center px-6 py-8">
         <div className="w-full max-w-sm">
@@ -159,8 +150,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-sm disabled:opacity-50"
-              style={{ backgroundColor: '#0275DE' }}
+              className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-sm disabled:opacity-50 hover:opacity-90"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
