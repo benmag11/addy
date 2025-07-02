@@ -17,10 +17,68 @@ export interface VerifyData {
 
 export type YearOption = '1st year' | '2nd year' | '3rd year' | '4th year' | '5th year' | '6th year'
 
+export type SubjectLevel = 'higher' | 'ordinary'
+
+export interface Subject {
+  id: string
+  name: string
+  category: 'core' | 'language' | 'science' | 'humanities' | 'practical' | 'business'
+}
+
+export interface SelectedSubject {
+  subject: Subject
+  level: SubjectLevel
+}
+
 export interface ValidationResult {
   valid: boolean
   message?: string
 }
+
+// Irish Leaving Certificate subjects
+export const LEAVING_CERT_SUBJECTS: Subject[] = [
+  // Core subjects
+  { id: 'irish', name: 'Irish', category: 'core' },
+  { id: 'english', name: 'English', category: 'core' },
+  { id: 'mathematics', name: 'Mathematics', category: 'core' },
+  
+  // Languages
+  { id: 'french', name: 'French', category: 'language' },
+  { id: 'german', name: 'German', category: 'language' },
+  { id: 'spanish', name: 'Spanish', category: 'language' },
+  { id: 'italian', name: 'Italian', category: 'language' },
+  { id: 'japanese', name: 'Japanese', category: 'language' },
+  { id: 'latin', name: 'Latin', category: 'language' },
+  
+  // Sciences
+  { id: 'biology', name: 'Biology', category: 'science' },
+  { id: 'chemistry', name: 'Chemistry', category: 'science' },
+  { id: 'physics', name: 'Physics', category: 'science' },
+  { id: 'agricultural-science', name: 'Agricultural Science', category: 'science' },
+  { id: 'applied-maths', name: 'Applied Mathematics', category: 'science' },
+  
+  // Humanities
+  { id: 'history', name: 'History', category: 'humanities' },
+  { id: 'geography', name: 'Geography', category: 'humanities' },
+  { id: 'economics', name: 'Economics', category: 'humanities' },
+  { id: 'politics', name: 'Politics & Society', category: 'humanities' },
+  { id: 'classical-studies', name: 'Classical Studies', category: 'humanities' },
+  { id: 'religious-education', name: 'Religious Education', category: 'humanities' },
+  
+  // Business
+  { id: 'business', name: 'Business', category: 'business' },
+  { id: 'accounting', name: 'Accounting', category: 'business' },
+  
+  // Practical
+  { id: 'art', name: 'Art', category: 'practical' },
+  { id: 'music', name: 'Music', category: 'practical' },
+  { id: 'pe', name: 'Physical Education', category: 'practical' },
+  { id: 'home-economics', name: 'Home Economics', category: 'practical' },
+  { id: 'construction', name: 'Construction Studies', category: 'practical' },
+  { id: 'dcg', name: 'Design & Communication Graphics', category: 'practical' },
+  { id: 'engineering', name: 'Engineering', category: 'practical' },
+  { id: 'technology', name: 'Technology', category: 'practical' }
+]
 
 // Helper function to validate Supabase configuration
 function validateSupabaseConfig() {
@@ -241,7 +299,7 @@ export function validateYear(year: YearOption): ValidationResult {
 }
 
 // Save onboarding step data to user metadata
-export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption }) {
+export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }) {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
@@ -253,7 +311,7 @@ export async function saveOnboardingStep(userId: string, data: { name?: string; 
       data: {
         onboarding: {
           ...data,
-          step: data.name ? 'name' : data.year ? 'year' : 'unknown',
+          step: data.name ? 'name' : data.year ? 'year' : data.subjects ? 'subjects' : 'unknown',
           completed: false,
           updated_at: new Date().toISOString()
         }

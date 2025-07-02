@@ -40,7 +40,7 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-6 py-8">
-        <div className="w-full max-w-md">
+        <div className={`w-full ${pathname === '/onboarding/subjects' ? 'max-w-6xl' : 'max-w-md'}`}>
           {/* Progress Indicator */}
           <ProgressIndicator 
             currentStep={currentStep}
