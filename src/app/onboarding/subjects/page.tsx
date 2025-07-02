@@ -235,8 +235,8 @@ export default function OnboardingSubjectsPage() {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:block">
-        <div className="text-center mb-8">
+      <div className="hidden md:flex flex-col h-full">
+        <div className="text-center mb-6 flex-shrink-0">
           <h1 className="text-2xl font-normal text-black mb-2 font-sf-pro">
             What subjects do you study?
           </h1>
@@ -245,20 +245,20 @@ export default function OnboardingSubjectsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-8">
+        <div className="flex-1 grid grid-cols-3 gap-8 min-h-0">
           {/* Subject Selection Panel - Scrollable */}
-          <div className="col-span-2">
-            {/* Search Bar - Sticky */}
-            <div className="sticky top-0 z-20 bg-white pb-4">
+          <div className="col-span-2 flex flex-col min-h-0">
+            {/* Search Bar */}
+            <div className="mb-4 flex-shrink-0">
               <SearchBar onSearch={handleSearch} />
             </div>
             
-            <div className="relative">
+            <div className="relative flex-1 min-h-0">
               {/* Scroll gradient overlay at top */}
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-top-shadow"></div>
               
               {/* Scrollable container */}
-              <div className="max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
+              <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
                 <div className="grid grid-cols-2 gap-3 pb-2">
                   {filteredSubjects.length === 0 ? (
                     <div className="col-span-2 text-center py-8">
@@ -296,14 +296,14 @@ export default function OnboardingSubjectsPage() {
               onRemoveSubject={handleSubjectRemove}
               onContinue={handleSubmit}
               loading={loading}
-              className="sticky top-4"
+              className="sticky top-0"
             />
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <p className="text-red-500 text-sm font-sf-pro mt-4 text-center">{error}</p>
+          <p className="text-red-500 text-sm font-sf-pro mt-4 text-center flex-shrink-0">{error}</p>
         )}
       </div>
     </>
