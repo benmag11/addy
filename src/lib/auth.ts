@@ -15,6 +15,13 @@ export interface VerifyData {
   token: string
 }
 
+export type YearOption = '1st year' | '2nd year' | '3rd year' | '4th year' | '5th year' | '6th year'
+
+export interface ValidationResult {
+  valid: boolean
+  message?: string
+}
+
 // Helper function to validate Supabase configuration
 function validateSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -203,6 +210,98 @@ export function validatePassword(password: string): { valid: boolean; message?: 
     return { valid: false, message: 'Password must be at least 8 characters long' }
   }
   return { valid: true }
+}
+
+export function validateName(name: string): ValidationResult {
+  const trimmedName = name.trim()
+  
+  if (!trimmedName) {
+    return { valid: false, message: 'Please enter your name' }
+  }
+  
+  if (trimmedName.length < 2) {
+    return { valid: false, message: 'Name must be at least 2 characters long' }
+  }
+  
+  if (trimmedName.length > 50) {
+    return { valid: false, message: 'Name must be less than 50 characters' }
+  }
+  
+  return { valid: true }
+}
+
+export function validateYear(year: YearOption): ValidationResult {
+  const validYears: YearOption[] = ['1st year', '2nd year', '3rd year', '4th year', '5th year', '6th year']
+  
+  if (!validYears.includes(year)) {
+    return { valid: false, message: 'Please select a valid year' }
+  }
+  
+  return { valid: true }
+}
+
+// Save onboarding step data to user metadata
+export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption }) {
+  try {
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
+    }
+    
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        onboarding: {
+          ...data,
+          step: data.name ? 'name' : data.year ? 'year' : 'unknown',
+          completed: false,
+          updated_at: new Date().toISOString()
+        }
+      }
+    })
+
+    if (error) {
+      return { success: false, error: { message: error.message } }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { message: 'Failed to save onboarding data. Please try again.' } 
+    }
+  }
+}
+
+// Complete the onboarding process
+export async function completeOnboarding(userId: string) {
+  try {
+    const configCheck = validateSupabaseConfig()
+    if (!configCheck.success) {
+      return configCheck
+    }
+    
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        onboarding: {
+          completed: true,
+          completed_at: new Date().toISOString()
+        }
+      }
+    })
+
+    if (error) {
+      return { success: false, error: { message: error.message } }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { message: 'Failed to complete onboarding. Please try again.' } 
+    }
+  }
 }
 
 // Format error messages for display

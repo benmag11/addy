@@ -130,8 +130,8 @@ export default function SignUpPage() {
         return
       }
 
-      // Redirect to success page
-      router.push('/welcome')
+      // Redirect to onboarding
+      router.push('/onboarding/name')
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
     } finally {
