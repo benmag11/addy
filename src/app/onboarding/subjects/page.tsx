@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { saveOnboardingStep, LEAVING_CERT_SUBJECTS, type Subject, type SelectedSubject, type SubjectLevel } from '@/lib/auth'
 import SubjectCard from '@/components/onboarding/SubjectCard'
 import SelectedSubjectsSidebar from '@/components/onboarding/SelectedSubjectsSidebar'
+import SearchBar from '@/components/onboarding/SearchBar'
 
 export default function OnboardingSubjectsPage() {
   const router = useRouter()
   const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubject[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
@@ -30,6 +32,23 @@ export default function OnboardingSubjectsPage() {
     
     getUser()
   }, [router])
+
+  // Filter subjects based on search term
+  const filteredSubjects = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return LEAVING_CERT_SUBJECTS
+    }
+    
+    const lowerSearchTerm = searchTerm.toLowerCase()
+    return LEAVING_CERT_SUBJECTS.filter(subject =>
+      subject.name.toLowerCase().includes(lowerSearchTerm)
+    )
+  }, [searchTerm])
+
+  // Handle search
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term)
+  }, [])
 
   // Handle scroll shadows for subjects container
   useEffect(() => {
@@ -155,27 +174,43 @@ export default function OnboardingSubjectsPage() {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-4">
+          <SearchBar onSearch={handleSearch} />
+        </div>
+
         {/* Selected Subjects (Collapsible on Mobile) */}
         {selectedSubjects.length > 0 && (
           <div className="mb-6">
             <SelectedSubjectsSidebar
               selectedSubjects={selectedSubjects}
               onRemoveSubject={handleSubjectRemove}
+              onContinue={handleSubmit}
+              loading={loading}
             />
           </div>
         )}
 
         {/* Subject Cards */}
         <div className="space-y-3 mb-8">
-          {LEAVING_CERT_SUBJECTS.map((subject) => (
-            <SubjectCard
-              key={subject.id}
-              subject={subject}
-              isSelected={isSubjectSelected(subject.id)}
-              selectedLevel={getSelectedLevel(subject.id)}
-              onSelect={handleSubjectSelect}
-            />
-          ))}
+          {filteredSubjects.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm font-sf-pro">
+                No subjects found matching &ldquo;{searchTerm}&rdquo;
+              </p>
+            </div>
+          ) : (
+            filteredSubjects.map((subject) => (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                isSelected={isSubjectSelected(subject.id)}
+                selectedLevel={getSelectedLevel(subject.id)}
+                onSelect={handleSubjectSelect}
+                onDeselect={handleSubjectRemove}
+              />
+            ))
+          )}
         </div>
 
         {/* Error Message */}
@@ -183,20 +218,19 @@ export default function OnboardingSubjectsPage() {
           <p className="text-red-500 text-sm font-sf-pro mb-4">{error}</p>
         )}
 
-        {/* Continue Button */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500 font-sf-pro">
-            {selectedSubjects.length} subjects selected
-          </span>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="text-white px-6 py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
-            style={{ backgroundColor: '#0275DE' }}
-          >
-            {loading ? 'Saving...' : 'Continue'}
-          </button>
-        </div>
+        {/* Fixed Continue Button for Mobile - Only show when no subjects selected */}
+        {selectedSubjects.length === 0 && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+            <button
+              onClick={handleSubmit}
+              disabled={loading || selectedSubjects.length === 0}
+              className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
+              style={{ backgroundColor: '#0275DE' }}
+            >
+              {loading ? 'Saving...' : 'Continue'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Desktop Layout */}
@@ -210,9 +244,14 @@ export default function OnboardingSubjectsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-3 gap-8">
           {/* Subject Selection Panel - Scrollable */}
           <div className="col-span-2">
+            {/* Search Bar - Sticky */}
+            <div className="sticky top-0 z-20 bg-white pb-4">
+              <SearchBar onSearch={handleSearch} />
+            </div>
+            
             <div className="relative">
               {/* Scroll gradient overlay at top */}
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-top-shadow"></div>
@@ -220,15 +259,24 @@ export default function OnboardingSubjectsPage() {
               {/* Scrollable container */}
               <div className="max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
                 <div className="grid grid-cols-2 gap-3 pb-2">
-                  {LEAVING_CERT_SUBJECTS.map((subject) => (
-                    <SubjectCard
-                      key={subject.id}
-                      subject={subject}
-                      isSelected={isSubjectSelected(subject.id)}
-                      selectedLevel={getSelectedLevel(subject.id)}
-                      onSelect={handleSubjectSelect}
-                    />
-                  ))}
+                  {filteredSubjects.length === 0 ? (
+                    <div className="col-span-2 text-center py-8">
+                      <p className="text-gray-500 text-sm font-sf-pro">
+                        No subjects found matching &ldquo;{searchTerm}&rdquo;
+                      </p>
+                    </div>
+                  ) : (
+                    filteredSubjects.map((subject) => (
+                      <SubjectCard
+                        key={subject.id}
+                        subject={subject}
+                        isSelected={isSubjectSelected(subject.id)}
+                        selectedLevel={getSelectedLevel(subject.id)}
+                        onSelect={handleSubjectSelect}
+                        onDeselect={handleSubjectRemove}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
               
@@ -242,6 +290,8 @@ export default function OnboardingSubjectsPage() {
             <SelectedSubjectsSidebar
               selectedSubjects={selectedSubjects}
               onRemoveSubject={handleSubjectRemove}
+              onContinue={handleSubmit}
+              loading={loading}
               className="sticky top-4"
             />
           </div>
@@ -249,23 +299,8 @@ export default function OnboardingSubjectsPage() {
 
         {/* Error Message */}
         {error && (
-          <p className="text-red-500 text-sm font-sf-pro mb-4 text-center">{error}</p>
+          <p className="text-red-500 text-sm font-sf-pro mt-4 text-center">{error}</p>
         )}
-
-        {/* Continue Button */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500 font-sf-pro">
-            {selectedSubjects.length} subjects selected
-          </span>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="text-white px-8 py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
-            style={{ backgroundColor: '#0275DE' }}
-          >
-            {loading ? 'Saving...' : 'Continue'}
-          </button>
-        </div>
       </div>
     </>
   )

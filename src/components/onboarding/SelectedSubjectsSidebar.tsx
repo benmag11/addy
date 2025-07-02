@@ -5,12 +5,16 @@ import { SelectedSubject } from '@/lib/auth'
 interface SelectedSubjectsSidebarProps {
   selectedSubjects: SelectedSubject[]
   onRemoveSubject: (subjectId: string) => void
+  onContinue: () => void
+  loading?: boolean
   className?: string
 }
 
 export default function SelectedSubjectsSidebar({ 
   selectedSubjects, 
   onRemoveSubject,
+  onContinue,
+  loading = false,
   className = "" 
 }: SelectedSubjectsSidebarProps) {
   return (
@@ -66,6 +70,23 @@ export default function SelectedSubjectsSidebar({
           ))}
         </div>
       )}
+      
+      {/* Continue Button Section */}
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 p-6 bg-gray-50 border-t border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-gray-600 font-sf-pro">
+            {selectedSubjects.length} {selectedSubjects.length === 1 ? 'subject' : 'subjects'} selected
+          </span>
+        </div>
+        <button
+          onClick={onContinue}
+          disabled={loading || selectedSubjects.length === 0}
+          className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
+          style={{ backgroundColor: '#0275DE' }}
+        >
+          {loading ? 'Saving...' : 'Continue'}
+        </button>
+      </div>
     </div>
   )
 }

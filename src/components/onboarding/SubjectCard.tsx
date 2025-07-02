@@ -8,6 +8,7 @@ interface SubjectCardProps {
   isSelected: boolean
   selectedLevel?: SubjectLevel
   onSelect: (subject: Subject, level: SubjectLevel) => void
+  onDeselect: (subjectId: string) => void
   className?: string
 }
 
@@ -16,6 +17,7 @@ export default function SubjectCard({
   isSelected, 
   selectedLevel,
   onSelect,
+  onDeselect,
   className = "" 
 }: SubjectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -47,6 +49,10 @@ export default function SubjectCard({
       // First click: expand and auto-select with Higher level
       setIsExpanded(true)
       onSelect(subject, 'higher')
+    } else {
+      // Click on selected card: deselect it
+      onDeselect(subject.id)
+      setIsExpanded(false)
     }
   }
 
@@ -71,6 +77,8 @@ export default function SubjectCard({
         <button
           onClick={handleCardClick}
           className="w-full p-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-t-lg"
+          aria-pressed={isSelected}
+          aria-label={`${subject.name} - ${isSelected ? 'selected, click to deselect' : 'click to select'}`}
         >
           <div className="flex items-center justify-between">
             <h3 className={`text-sm font-medium font-sf-pro ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
