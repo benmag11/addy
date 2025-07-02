@@ -1,14 +1,6 @@
 'use client'
 
-import { SelectedSubject } from '@/lib/auth'
-
-interface SelectedSubjectsSidebarProps {
-  selectedSubjects: SelectedSubject[]
-  onRemoveSubject: (subjectId: string) => void
-  onContinue: () => void
-  loading?: boolean
-  className?: string
-}
+import type { SelectedSubjectsSidebarProps } from '@/types'
 
 export default function SelectedSubjectsSidebar({ 
   selectedSubjects, 
@@ -73,7 +65,7 @@ export default function SelectedSubjectsSidebar({
       
       {/* Continue Button Section */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 p-6 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3">
           <span className="text-sm text-gray-600 font-sf-pro">
             {selectedSubjects.length} {selectedSubjects.length === 1 ? 'subject' : 'subjects'} selected
           </span>
@@ -81,8 +73,7 @@ export default function SelectedSubjectsSidebar({
         <button
           onClick={onContinue}
           disabled={loading || selectedSubjects.length === 0}
-          className="w-full text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50"
-          style={{ backgroundColor: '#0275DE' }}
+          className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50 hover:opacity-90"
         >
           {loading ? 'Saving...' : 'Continue'}
         </button>
