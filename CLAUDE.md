@@ -1,169 +1,98 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-
-
+This file provides guidance to Claude Code when working with this repository.
 
 # IMPORTANT RULES YOU MUST FOLLOW AS AN AI AGENT
-1. First think through the problem, read the codebase for relevant files, and write a plan to .claude/tasks. This is stored locally in our project. 
-2. The plan should have a list of todo items that you can check off as you complete them
-3. Before you begin working, check in with me and I will verify the plan.
-4. Then, begin working on the todo items, marking them as complete as you go.
-5. Please every step of the way just give me a high level explanation of what changes you made
-6. Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
-7. Finally, add a review section to the [todo.md](http://todo.md/) file with a summary of the changes you made and any other relevant information.
+1. First think through the problem, read the codebase for relevant files, and write a plan to .claude/tasks
+2. Check in with me and I will verify the plan before you begin working
+3. Work on todo items, marking them as complete as you go
+4. Give me a high level explanation of what changes you made at each step
+5. Make every change as simple as possible - avoid massive or complex changes
+6. Add a review section to the todo.md file with a summary of changes
 
 ## Project Overview
 
-Addy is a modern authentication application with landing page UI, built with Next.js 14, TypeScript, and Tailwind CSS. Features include email/password signup, Google OAuth, email verification with countdown timers, and SSR-compatible session management. The responsive design includes a character illustration and clean, minimal UI focused on "leaving cert" education.
+Addy is a modern authentication application with onboarding flow, built with Next.js 14, TypeScript, and Tailwind CSS. Features include email/password signup, Google OAuth, email verification, and a 3-step onboarding process for Leaving Cert students.
 
 ## Essential Commands
 
-### Development
-- `npm run dev` - Start development server (auto-detects available port)
-- `npm run build` - Build for production
+- `npm run dev` - Start development server
+- `npm run build` - Build for production  
 - `npm run lint` - Run ESLint
-
-### Testing (Puppeteer-based)
 - `npm run visual-test` - Screenshot testing at multiple breakpoints
-- `npm run test-wrapping` - Test for text wrapping issues
-- `npm run auto-improve` - Automated visual improvement iterations
-- `node scripts/puppeteer/test-google-oauth.js` - Test OAuth flow end-to-end
+- `node scripts/puppeteer/test-google-oauth.js` - Test OAuth flow
 
 ## Architecture
 
-### Application Structure
-- **Landing Page** (`src/app/page.tsx`): Responsive dual-layout with character illustration
-- **Authentication Flow** (`src/app/signup/page.tsx`): Email/password + Google OAuth
-- **Welcome Page** (`src/app/welcome/page.tsx`): Post-authentication success state
-- **Auth Callback** (`src/app/auth/callback/route.ts`): OAuth redirect handling
+### Application Flow
+- **Landing Page** → **Auth** → **Onboarding** (name → year → subjects) → **Welcome**
+- Smart redirects based on completion status
+- Database-first onboarding state management
 
-### Supabase SSR Architecture
-- `src/utils/supabase/client.ts` - Browser-side Supabase client
-- `src/utils/supabase/server.ts` - Server-side Supabase client  
-- `src/utils/supabase/middleware.ts` - Session management utilities
-- `middleware.ts` - Next.js middleware for auth state and redirects
-- `src/lib/auth.ts` - Authentication functions and error handling
+### Key Files
+- `src/app/onboarding/*` - 3-step onboarding flow
+- `src/lib/auth.ts` - Authentication with database integration
+- `src/lib/user-profile.ts` - Profile and onboarding management
+- `src/lib/auth-helpers.ts` - Post-auth redirect logic
+- `src/utils/supabase/*` - SSR-compatible Supabase clients
+- `middleware.ts` - Auth state and onboarding redirects
 
-### Design System
-- **Typography**: SF Pro font family, normal weight (not bold)
-- **Colors**: Primary blue `#0275DE`, light blue background `#F2F9FF`
-- **Responsive**: Mobile-first with 768px breakpoint for dual-layout
-- **Constraints**: Headlines use `whitespace-nowrap` at 1024px+ to prevent wrapping
+### Supabase Database
+- **user_profiles** table with RLS policies
+- Auto-creation via database trigger
+- Fields: `user_id`, `full_name`, `year`, `subjects[]`, `onboarding_completed`, `onboarding_step`
+- Subject format: `"subject_id:level"` strings
 
-## Authentication Setup
+## Setup Requirements
 
-### Environment Variables
-Required in `.env.local`:
+### Environment Variables (.env.local)
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key  
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-### Google OAuth Configuration
-1. **Supabase Dashboard**: 
-   - Authentication > Providers > Enable Google
-   - Authentication > URL Configuration > Additional Redirect URLs: Add `http://localhost:3000/**`
-2. **Google Cloud Console**: 
-   - Create OAuth 2.0 credentials
-   - Authorized JavaScript origins: Add `http://localhost:3000`
-   - Authorized redirect URIs: Add `https://your-supabase-url.supabase.co/auth/v1/callback`
-3. **Test**: Run `node scripts/puppeteer/test-google-oauth.js`
+### Database Setup
+1. Run migration: `supabase/migrations/20240101000000_user_profiles_onboarding.sql`
+2. Verify with: `SELECT * FROM public.user_profiles LIMIT 1;`
 
-### Authentication Features
-- **Email/Password**: Verification workflow with 60-second countdown timer
-- **Google OAuth**: One-click sign-up with automatic account linking
-- **Session Management**: SSR-compatible with automatic token refresh
-- **Error Handling**: Comprehensive error states for all auth scenarios
-- **Account Conflicts**: Automatic linking when same email used across methods
+### Google OAuth Setup
+1. **Supabase**: Authentication > Providers > Enable Google
+2. **Google Console**: Create OAuth credentials with redirect to Supabase
+3. Test: `node scripts/puppeteer/test-google-oauth.js`
 
-## Security Baseline
-
-### Current Security Posture
-As of the most recent security audit, the application implements a risk-based security approach that prioritizes fixing real vulnerabilities over adding complex defenses against hypothetical threats.
-
-### Implemented Security Controls
-
-#### 1. User Enumeration Protection
-- **Status**: ✅ Implemented
-- **Details**: Removed `/api/check-email` endpoint that allowed attackers to determine which emails have accounts
-- **Method**: Uses Supabase's built-in user detection via `identities.length === 0` check in `signUpWithEmail()`
-- **Files**: `src/lib/auth.ts:52-60`
-
-#### 2. Built-in Supabase Protections
-- **Authentication Rate Limiting**: Supabase provides built-in rate limiting on authentication endpoints
-- **Session Security**: Automatic token refresh and secure cookie handling via SSR
-- **Password Hashing**: bcrypt with random salt parameters
-- **OAuth Security**: Secure redirect handling and state validation
-
-#### 3. Browser-Level Protections
-- **SameSite Cookies**: Modern browsers provide baseline CSRF protection
-- **HTTPS Enforcement**: Secure cookie transmission in production
-- **XSS Protection**: React's JSX provides automatic escaping
-
-#### 4. Input Validation
-- **Email Validation**: Consistent regex pattern validation (`src/lib/auth.ts:197`)
-- **Password Requirements**: Minimum 8 characters (configurable via Supabase)
-- **Verification Codes**: Numeric-only input filtering
-
-### Deferred Security Controls
-
-#### 1. Row Level Security (RLS) Policies
-- **Status**: ⏳ Deferred until data model finalization
-- **Rationale**: More efficient to audit and configure all policies together
-- **Action Required**: Manual Supabase dashboard review before production
-
-#### 2. Advanced Rate Limiting
-- **Status**: 📊 Monitoring-based implementation
-- **Current**: Relies on Supabase's built-in rate limiting
-- **Future**: Will implement application-level limits if monitoring shows bypass attempts
-
-#### 3. CSRF Protection
-- **Status**: 🔍 Risk-assessed as low priority
-- **Current**: Protected by SameSite cookies and modern browser defaults
-- **Future**: Will implement if app adds high-risk one-click actions
-
-### Security Monitoring Plan
-
-#### Immediate Monitoring
-- Watch for patterns of failed login attempts
-- Monitor unusual traffic to authentication endpoints
-- Track error rates and response times
-
-#### Trigger Events for Security Review
-- High volume of authentication failures from specific IPs
-- Successful bypass of Supabase's rate limiting
-- Addition of sensitive one-click actions (account deletion, data export)
-- User reports of suspected account compromise
-
-#### Future Security Enhancements
-1. **Multi-Factor Authentication (MFA)** - Next major security feature
-2. **Enhanced Password Policies** - Only if user feedback indicates need
-3. **Application-level Rate Limiting** - Only if monitoring shows necessity
-4. **CSRF Protection** - Only for high-risk state-changing actions
-
-### Security Development Guidelines
-- Always test both email/password and OAuth authentication paths
-- Verify that new user data tables include appropriate RLS policies
-- Maintain the principle of "fix real issues before hypothetical ones"
-- Document any new authentication flows or sensitive operations
+## Design System
+- **Typography**: SF Pro, normal weight
+- **Colors**: Primary blue `#0275DE`, background `#F2F9FF`
+- **Responsive**: Mobile-first, 768px breakpoint
+- **Subject Selection**: 6-14 subjects required, CSS Grid layout
 
 ## Testing Strategy
 
-### Visual Testing
-- **Screenshots**: `npm run visual-test` captures 4 breakpoints (375px, 768px, 1024px, 1440px)
-- **Text Wrapping**: `npm run test-wrapping` ensures headlines don't wrap inappropriately
-- **Auto-improvement**: `npm run auto-improve` detects and suggests visual fixes
+### Critical Test Scenarios
+1. New user email signup → verification → onboarding
+2. New user Google OAuth → onboarding detection  
+3. Returning incomplete user → resume onboarding
+4. Returning complete user → welcome page
+5. Subject selection validation (6-14 limit)
 
-### Authentication Testing  
-- **OAuth Flow**: `node scripts/puppeteer/test-google-oauth.js` tests complete Google sign-up
-- **Email Verification**: Multiple test scripts validate countdown timer and resend functionality
-- **Error Scenarios**: Test cancellation, invalid codes, network failures
+## Security
+- User enumeration protection via Supabase detection
+- RLS policies for data isolation
+- Built-in Supabase rate limiting and session security
+- Input validation on emails, passwords, verification codes
 
-### Development Notes
-- **Logo Sizing**: Critical - test across multiple screen sizes before changes
-- **Port Flexibility**: Dev server auto-detects available ports (3000-3005+)
-- **Visual Regression**: Always run visual tests after UI changes
-- **Auth Flow**: Test both email/password and OAuth paths after auth changes
+## Current Status
+
+### ✅ Completed
+- Full authentication system (email + Google OAuth)
+- 3-step onboarding with validation
+- Database integration with RLS
+- Smart redirects and resume capability
+- Responsive subject selection UI
+
+### ⚠️ Important Notes
+- Migration required for database setup
+- Subject storage uses simplified format
+- All auth flows should be tested after changes
+- Database connection error handling implemented

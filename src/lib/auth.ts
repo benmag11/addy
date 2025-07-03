@@ -298,25 +298,37 @@ export function validateYear(year: YearOption): ValidationResult {
   return { valid: true }
 }
 
-// Save onboarding step data to user metadata
-export async function saveOnboardingStep(_userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }): Promise<AuthResult> {
+// Save onboarding step data to database
+export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
       return configCheck
     }
     
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        onboarding: {
-          ...data,
-          step: data.name ? 'name' : data.year ? 'year' : data.subjects ? 'subjects' : 'unknown',
-          completed: false,
-          updated_at: new Date().toISOString()
-        }
-      }
-    })
+    // Import functions from user-profile
+    const { updateUserProfile, convertSubjectsToStrings } = await import('./user-profile')
+    
+    const updates: any = {}
+    
+    if (data.name) {
+      updates.full_name = data.name
+      updates.onboarding_step = 'year'
+    }
+    
+    if (data.year) {
+      updates.year = data.year
+      updates.onboarding_step = 'subjects'
+    }
+    
+    if (data.subjects) {
+      // Convert SelectedSubject[] to string[] format for storage
+      updates.subjects = convertSubjectsToStrings(data.subjects)
+      updates.onboarding_step = 'completed'
+      updates.onboarding_completed = true
+    }
+    
+    const { error } = await updateUserProfile(userId, updates)
 
     if (error) {
       return { success: false, error: { message: error.message } }
@@ -332,21 +344,19 @@ export async function saveOnboardingStep(_userId: string, data: { name?: string;
 }
 
 // Complete the onboarding process
-export async function completeOnboarding(_userId: string): Promise<AuthResult> {
+export async function completeOnboarding(userId: string): Promise<AuthResult> {
   try {
     const configCheck = validateSupabaseConfig()
     if (!configCheck.success) {
       return configCheck
     }
     
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        onboarding: {
-          completed: true,
-          completed_at: new Date().toISOString()
-        }
-      }
+    // Import function from user-profile
+    const { updateUserProfile } = await import('./user-profile')
+    
+    const { error } = await updateUserProfile(userId, {
+      onboarding_completed: true,
+      onboarding_step: 'completed'
     })
 
     if (error) {

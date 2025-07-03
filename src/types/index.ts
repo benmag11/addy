@@ -94,6 +94,20 @@ export interface SelectedSubject {
   level: SubjectLevel
 }
 
+// Database Types
+export interface UserProfile {
+  user_id: string
+  full_name: string | null
+  year: string | null
+  subjects: string[] | null
+  onboarding_completed: boolean
+  onboarding_step?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type OnboardingStep = 'name' | 'year' | 'subjects' | 'completed'
+
 // Component Props Types
 export interface SubjectCardProps {
   subject: Subject

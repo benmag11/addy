@@ -1,9 +1,33 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import HeaderLogo from '@/components/ui/HeaderLogo'
 import { IMAGES, IMAGE_DIMENSIONS, ROUTES } from '@/constants'
+import { checkAndRedirectUser } from '@/lib/auth-helpers'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function WelcomePage() {
+  const router = useRouter()
+  const [isValidatingUser, setIsValidatingUser] = useState(true)
+
+  useEffect(() => {
+    const validateAndRedirect = async () => {
+      // Check if user has completed onboarding
+      await checkAndRedirectUser(router)
+      // If we reach this point, user is valid and can see welcome page
+      setIsValidatingUser(false)
+    }
+
+    validateAndRedirect()
+  }, [router])
+
+  // Show loading spinner while validating user status
+  if (isValidatingUser) {
+    return <LoadingSpinner />
+  }
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}

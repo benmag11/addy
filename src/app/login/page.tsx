@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signInWithEmailPassword, signInWithGoogle, validateEmail, formatAuthError } from '@/lib/auth'
+import { handlePostSignIn } from '@/lib/auth-helpers'
 import type { AuthError } from '@/types'
 import HeaderLogo from '@/components/ui/HeaderLogo'
 
@@ -46,7 +47,13 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/welcome')
+      // Check onboarding status and redirect accordingly
+      if (result.data) {
+        await handlePostSignIn(result.data.id, router)
+      } else {
+        // Fallback if no user data
+        router.push('/welcome')
+      }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
     } finally {
