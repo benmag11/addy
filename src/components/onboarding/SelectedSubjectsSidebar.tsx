@@ -9,6 +9,11 @@ export default function SelectedSubjectsSidebar({
   loading = false,
   className = "" 
 }: SelectedSubjectsSidebarProps) {
+  const MIN_SUBJECTS = 6
+  const MAX_SUBJECTS = 14
+  const subjectCount = selectedSubjects.length
+  const isValidCount = subjectCount >= MIN_SUBJECTS && subjectCount <= MAX_SUBJECTS
+  
   return (
     <div className={`bg-gray-50 rounded-lg p-6 ${className}`}>
       <div className="flex items-center justify-between mb-4">
@@ -30,37 +35,65 @@ export default function SelectedSubjectsSidebar({
           <p className="text-gray-500 text-sm font-sf-pro">
             Choose subjects from the left to see them here
           </p>
+          <p className="text-gray-400 text-xs font-sf-pro mt-2">
+            Minimum 6 subjects required
+          </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {selectedSubjects.map((selectedSubject) => (
-            <div
-              key={selectedSubject.subject.id}
-              className="bg-white rounded-lg p-3 border border-gray-200 transition-all duration-200 hover:shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900 font-sf-pro">
-                    {selectedSubject.subject.name}
-                  </h4>
-                  <p className="text-xs text-gray-600 font-sf-pro mt-0.5">
-                    {selectedSubject.level.charAt(0).toUpperCase() + selectedSubject.level.slice(1)} Level
-                  </p>
+        <>
+          <div className="space-y-2 mb-4">
+            {selectedSubjects.map((selectedSubject) => (
+              <div
+                key={selectedSubject.subject.id}
+                className="bg-white rounded-lg p-3 border border-gray-200 transition-all duration-200 hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-gray-900 font-sf-pro">
+                      {selectedSubject.subject.name}
+                    </h4>
+                    <p className="text-xs text-gray-600 font-sf-pro mt-0.5">
+                      {selectedSubject.level.charAt(0).toUpperCase() + selectedSubject.level.slice(1)} Level
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => onRemoveSubject(selectedSubject.subject.id)}
+                    className="flex-shrink-0 ml-3 p-1 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded"
+                    aria-label={`Remove ${selectedSubject.subject.name}`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                
-                <button
-                  onClick={() => onRemoveSubject(selectedSubject.subject.id)}
-                  className="flex-shrink-0 ml-3 p-1 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded"
-                  aria-label={`Remove ${selectedSubject.subject.name}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
+            ))}
+          </div>
+          
+          {/* Validation Messages */}
+          {subjectCount < MIN_SUBJECTS && (
+            <div className="flex items-start space-x-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-blue-800 font-sf-pro">
+                Minimum 6 subjects required. Select {MIN_SUBJECTS - subjectCount} more.
+              </p>
             </div>
-          ))}
-        </div>
+          )}
+          
+          {subjectCount > MAX_SUBJECTS && (
+            <div className="flex items-start space-x-2 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm text-red-800 font-sf-pro">
+                Maximum 14 subjects allowed. Please remove {subjectCount - MAX_SUBJECTS} subject{subjectCount - MAX_SUBJECTS > 1 ? 's' : ''}.
+              </p>
+            </div>
+          )}
+        </>
       )}
       
       {/* Continue Button Section */}
@@ -72,7 +105,7 @@ export default function SelectedSubjectsSidebar({
         </div>
         <button
           onClick={onContinue}
-          disabled={loading || selectedSubjects.length === 0}
+          disabled={loading || !isValidCount}
           className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50 hover:opacity-90"
         >
           {loading ? 'Saving...' : 'Continue'}

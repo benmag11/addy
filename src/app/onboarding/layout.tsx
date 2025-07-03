@@ -24,7 +24,7 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
   const stepNames = ONBOARDING_STEPS.map(step => step.name)
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header with Logo */}
       <header className="w-full py-4 px-6 flex-shrink-0">
         <Link href="/">
@@ -39,7 +39,9 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-6 py-8 overflow-hidden">
+      <div className={`flex-1 flex items-center justify-center px-6 py-8 ${
+        pathname === '/onboarding/subjects' ? 'md:overflow-hidden overflow-y-auto' : 'overflow-y-auto'
+      }`}>
         <div className={`w-full ${pathname === '/onboarding/subjects' ? 'max-w-6xl h-full' : 'max-w-md'}`}>
           {/* Progress Indicator */}
           <ProgressIndicator 

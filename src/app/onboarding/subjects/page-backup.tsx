@@ -1,0 +1,331 @@
+'use client'
+
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+import { saveOnboardingStep, LEAVING_CERT_SUBJECTS } from '@/lib/auth'
+import type { Subject, SelectedSubject, SubjectLevel, User } from '@/types'
+import SubjectCard from '@/components/onboarding/SubjectCard'
+import SelectedSubjectsSidebar from '@/components/onboarding/SelectedSubjectsSidebar'
+import SearchBar from '@/components/onboarding/SearchBar'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+
+export default function OnboardingSubjectsPage() {
+  const router = useRouter()
+  const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubject[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/signup')
+        return
+      }
+      
+      setUser(user)
+    }
+    
+    getUser()
+  }, [router])
+
+  // Filter subjects based on search term
+  const filteredSubjects = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return LEAVING_CERT_SUBJECTS
+    }
+    
+    const lowerSearchTerm = searchTerm.toLowerCase()
+    return LEAVING_CERT_SUBJECTS.filter(subject =>
+      subject.name.toLowerCase().includes(lowerSearchTerm)
+    )
+  }, [searchTerm])
+
+  // Handle search
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term)
+  }, [])
+
+  // Handle scroll shadows for subjects container
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = document.getElementById('subjects-scroll-container')
+      const topShadow = document.getElementById('scroll-top-shadow')
+      const bottomShadow = document.getElementById('scroll-bottom-shadow')
+      
+      if (container && topShadow && bottomShadow) {
+        const { scrollTop, scrollHeight, clientHeight } = container
+        const isScrollable = scrollHeight > clientHeight
+        
+        // Show/hide top shadow
+        if (scrollTop > 0) {
+          topShadow.classList.add('opacity-100')
+          topShadow.classList.remove('opacity-0')
+        } else {
+          topShadow.classList.remove('opacity-100')
+          topShadow.classList.add('opacity-0')
+        }
+        
+        // Show/hide bottom shadow
+        if (isScrollable && scrollTop < scrollHeight - clientHeight - 1) {
+          bottomShadow.classList.add('opacity-100')
+          bottomShadow.classList.remove('opacity-0')
+        } else {
+          bottomShadow.classList.remove('opacity-100')
+          bottomShadow.classList.add('opacity-0')
+        }
+      }
+    }
+    
+    // Initial check
+    handleScroll()
+    
+    // Add scroll listener
+    const container = document.getElementById('subjects-scroll-container')
+    if (container) {
+      container.addEventListener('scroll', handleScroll)
+      // Also check on window resize
+      window.addEventListener('resize', handleScroll)
+      
+      return () => {
+        container.removeEventListener('scroll', handleScroll)
+        window.removeEventListener('resize', handleScroll)
+      }
+    }
+    
+    return undefined
+  }, [])
+
+  const handleSubjectSelect = (subject: Subject, level: SubjectLevel) => {
+    setSelectedSubjects(prev => {
+      // Check if subject is already selected
+      const existingIndex = prev.findIndex(s => s.subject.id === subject.id)
+      
+      if (existingIndex >= 0) {
+        // Update existing selection
+        const updated = [...prev]
+        updated[existingIndex] = { subject, level }
+        return updated
+      } else {
+        // Add new selection
+        return [...prev, { subject, level }]
+      }
+    })
+    setError(null)
+  }
+
+  const handleSubjectRemove = (subjectId: string) => {
+    setSelectedSubjects(prev => prev.filter(s => s.subject.id !== subjectId))
+  }
+
+  const isSubjectSelected = (subjectId: string) => {
+    return selectedSubjects.some(s => s.subject.id === subjectId)
+  }
+
+  const getSelectedLevel = (subjectId: string): SubjectLevel | undefined => {
+    return selectedSubjects.find(s => s.subject.id === subjectId)?.level
+  }
+
+  const handleSubmit = async () => {
+    if (!user) return
+    
+    // Validate subject count
+    if (selectedSubjects.length < 6) {
+      setError('Please select at least 6 subjects')
+      return
+    }
+    
+    if (selectedSubjects.length > 14) {
+      setError('Please select no more than 14 subjects')
+      return
+    }
+    
+    setError(null)
+    setLoading(true)
+
+    try {
+      const result = await saveOnboardingStep(user.id, { subjects: selectedSubjects })
+      
+      if (!result.success) {
+        setError('error' in result && result.error ? result.error.message : 'Failed to save subjects')
+        return
+      }
+
+      // Navigate to welcome page (completing onboarding)
+      router.push('/welcome')
+    } catch (err) {
+      console.error('Unexpected error during subject save:', err)
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!user) {
+    return <LoadingSpinner />
+  }
+
+  return (
+    <>
+      {/* Mobile Layout */}
+      <div className="block md:hidden">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-normal text-black mb-2 font-sf-pro">
+            What subjects do you study?
+          </h1>
+          <p className="text-gray-500 text-sm font-sf-pro">
+            We&apos;ll help you focus on what matters most
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-4">
+          <SearchBar onSearch={handleSearch} />
+        </div>
+
+        {/* Selected Subjects (Collapsible on Mobile) */}
+        {selectedSubjects.length > 0 && (
+          <div className="mb-6">
+            <SelectedSubjectsSidebar
+              selectedSubjects={selectedSubjects}
+              onRemoveSubject={handleSubjectRemove}
+              onContinue={handleSubmit}
+              loading={loading}
+            />
+          </div>
+        )}
+
+        {/* Subject Cards */}
+        <div className="space-y-3 mb-8">
+          {filteredSubjects.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm font-sf-pro">
+                No subjects found matching &ldquo;{searchTerm}&rdquo;
+              </p>
+            </div>
+          ) : (
+            filteredSubjects.map((subject) => {
+              const level = getSelectedLevel(subject.id)
+              return (
+                <SubjectCard
+                  key={subject.id}
+                  subject={subject}
+                  isSelected={isSubjectSelected(subject.id)}
+                  {...(level && { selectedLevel: level })}
+                  onSelect={handleSubjectSelect}
+                  onDeselect={handleSubjectRemove}
+                />
+              )
+            })
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <p className="text-red-500 text-sm font-sf-pro mb-4">{error}</p>
+        )}
+
+        {/* Fixed Continue Button for Mobile - Only show when no subjects selected */}
+        {selectedSubjects.length === 0 && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+            <button
+              onClick={handleSubmit}
+              disabled={loading || selectedSubjects.length === 0}
+              className="w-full bg-addy-blue text-white py-3 rounded-lg transition-colors font-sf-pro font-medium text-base disabled:opacity-50 hover:opacity-90"
+            >
+              {loading ? 'Saving...' : 'Continue'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:flex flex-col h-screen max-h-screen">
+        {/* Header Section - Fixed Height */}
+        <div className="px-8 py-6 flex-shrink-0">
+          <div className="text-center">
+            <h1 className="text-2xl font-normal text-black mb-2 font-sf-pro">
+              What subjects do you study?
+            </h1>
+            <p className="text-gray-500 text-sm font-sf-pro">
+              We&apos;ll help you focus on what matters most
+            </p>
+          </div>
+        </div>
+
+        {/* Main Content Area - Flexible Height with Container */}
+        <div className="flex-1 px-8 pb-6 min-h-0">
+          <div className="h-full grid grid-cols-3 gap-8">
+            {/* Subject Selection Panel - Contained Box */}
+            <div className="col-span-2 bg-gray-50 rounded-lg p-6 flex flex-col">
+              {/* Search Bar */}
+              <div className="mb-4 flex-shrink-0">
+                <SearchBar onSearch={handleSearch} />
+              </div>
+              
+              {/* Scrollable Container with Dynamic Height */}
+              <div className="relative h-[calc(100vh-280px)]">
+                {/* Scroll gradient overlay at top */}
+                <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-50 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-top-shadow"></div>
+                
+                {/* Scrollable area */}
+                <div className="absolute inset-0 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
+                  <div className="grid grid-cols-2 gap-3">
+                    {filteredSubjects.length === 0 ? (
+                      <div className="col-span-2 text-center py-8">
+                        <p className="text-gray-500 text-sm font-sf-pro">
+                          No subjects found matching &ldquo;{searchTerm}&rdquo;
+                        </p>
+                      </div>
+                    ) : (
+                      filteredSubjects.map((subject) => {
+                        const level = getSelectedLevel(subject.id)
+                        return (
+                          <SubjectCard
+                            key={subject.id}
+                            subject={subject}
+                            isSelected={isSubjectSelected(subject.id)}
+                            {...(level && { selectedLevel: level })}
+                            onSelect={handleSubjectSelect}
+                            onDeselect={handleSubjectRemove}
+                          />
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+                
+                {/* Scroll gradient overlay at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-bottom-shadow"></div>
+              </div>
+            </div>
+
+            {/* Selected Subjects Sidebar */}
+            <div className="col-span-1">
+              <SelectedSubjectsSidebar
+                selectedSubjects={selectedSubjects}
+                onRemoveSubject={handleSubjectRemove}
+                onContinue={handleSubmit}
+                loading={loading}
+                className="sticky top-0"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="px-8 pb-4">
+            <p className="text-red-500 text-sm font-sf-pro text-center">{error}</p>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
