@@ -235,75 +235,84 @@ export default function OnboardingSubjectsPage() {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex flex-col h-full">
-        <div className="text-center mb-6 flex-shrink-0">
-          <h1 className="text-2xl font-normal text-black mb-2 font-sf-pro">
-            What subjects do you study?
-          </h1>
-          <p className="text-gray-500 text-sm font-sf-pro">
-            We&apos;ll help you focus on what matters most
-          </p>
+      <div className="hidden md:flex flex-col h-screen max-h-screen">
+        {/* Header Section - Fixed Height */}
+        <div className="px-8 py-6 flex-shrink-0">
+          <div className="text-center">
+            <h1 className="text-2xl font-normal text-black mb-2 font-sf-pro">
+              What subjects do you study?
+            </h1>
+            <p className="text-gray-500 text-sm font-sf-pro">
+              We&apos;ll help you focus on what matters most
+            </p>
+          </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-3 gap-8 min-h-0">
-          {/* Subject Selection Panel - Scrollable */}
-          <div className="col-span-2 flex flex-col min-h-0">
-            {/* Search Bar */}
-            <div className="mb-4 flex-shrink-0">
-              <SearchBar onSearch={handleSearch} />
-            </div>
-            
-            <div className="relative flex-1 min-h-0">
-              {/* Scroll gradient overlay at top */}
-              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-top-shadow"></div>
-              
-              {/* Scrollable container */}
-              <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
-                <div className="grid grid-cols-2 gap-3 pb-2">
-                  {filteredSubjects.length === 0 ? (
-                    <div className="col-span-2 text-center py-8">
-                      <p className="text-gray-500 text-sm font-sf-pro">
-                        No subjects found matching &ldquo;{searchTerm}&rdquo;
-                      </p>
-                    </div>
-                  ) : (
-                    filteredSubjects.map((subject) => {
-                      const level = getSelectedLevel(subject.id)
-                      return (
-                        <SubjectCard
-                          key={subject.id}
-                          subject={subject}
-                          isSelected={isSubjectSelected(subject.id)}
-                          {...(level && { selectedLevel: level })}
-                          onSelect={handleSubjectSelect}
-                          onDeselect={handleSubjectRemove}
-                        />
-                      )
-                    })
-                  )}
-                </div>
+        {/* Main Content Area - Flexible Height with Container */}
+        <div className="flex-1 px-8 pb-6 min-h-0">
+          <div className="h-full max-h-[600px] grid grid-cols-3 gap-8">
+            {/* Subject Selection Panel - Contained Box */}
+            <div className="col-span-2 bg-gray-50 rounded-lg p-6 flex flex-col">
+              {/* Search Bar */}
+              <div className="mb-4 flex-shrink-0">
+                <SearchBar onSearch={handleSearch} />
               </div>
               
-              {/* Scroll gradient overlay at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-bottom-shadow"></div>
+              {/* Scrollable Container with Explicit Height */}
+              <div className="relative h-[450px]">
+                {/* Scroll gradient overlay at top */}
+                <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-50 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-top-shadow"></div>
+                
+                {/* Scrollable area */}
+                <div className="absolute inset-0 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" id="subjects-scroll-container">
+                  <div className="grid grid-cols-2 gap-3 pb-2">
+                    {filteredSubjects.length === 0 ? (
+                      <div className="col-span-2 text-center py-8">
+                        <p className="text-gray-500 text-sm font-sf-pro">
+                          No subjects found matching &ldquo;{searchTerm}&rdquo;
+                        </p>
+                      </div>
+                    ) : (
+                      filteredSubjects.map((subject) => {
+                        const level = getSelectedLevel(subject.id)
+                        return (
+                          <SubjectCard
+                            key={subject.id}
+                            subject={subject}
+                            isSelected={isSubjectSelected(subject.id)}
+                            {...(level && { selectedLevel: level })}
+                            onSelect={handleSubjectSelect}
+                            onDeselect={handleSubjectRemove}
+                          />
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+                
+                {/* Scroll gradient overlay at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300" id="scroll-bottom-shadow"></div>
+              </div>
             </div>
-          </div>
 
-          {/* Selected Subjects Sidebar */}
-          <div className="col-span-1">
-            <SelectedSubjectsSidebar
-              selectedSubjects={selectedSubjects}
-              onRemoveSubject={handleSubjectRemove}
-              onContinue={handleSubmit}
-              loading={loading}
-              className="sticky top-0"
-            />
+            {/* Selected Subjects Sidebar */}
+            <div className="col-span-1">
+              <SelectedSubjectsSidebar
+                selectedSubjects={selectedSubjects}
+                onRemoveSubject={handleSubjectRemove}
+                onContinue={handleSubmit}
+                loading={loading}
+                className="sticky top-0"
+              />
+            </div>
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <p className="text-red-500 text-sm font-sf-pro mt-4 text-center flex-shrink-0">{error}</p>
+          <div className="px-8 pb-4">
+            <p className="text-red-500 text-sm font-sf-pro text-center">{error}</p>
+          </div>
         )}
       </div>
     </>
