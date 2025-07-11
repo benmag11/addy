@@ -3,57 +3,14 @@ import type {
   AuthError, 
   SignUpData, 
   VerifyData, 
-  YearOption, 
-  Subject, 
-  SelectedSubject, 
-  ValidationResult,
   AuthResult
 } from '@/types'
 
-// Irish Leaving Certificate subjects
-export const LEAVING_CERT_SUBJECTS: Subject[] = [
-  // Core subjects
-  { id: 'irish', name: 'Irish', category: 'core' },
-  { id: 'english', name: 'English', category: 'core' },
-  { id: 'mathematics', name: 'Mathematics', category: 'core' },
-  
-  // Languages
-  { id: 'french', name: 'French', category: 'language' },
-  { id: 'german', name: 'German', category: 'language' },
-  { id: 'spanish', name: 'Spanish', category: 'language' },
-  { id: 'italian', name: 'Italian', category: 'language' },
-  { id: 'japanese', name: 'Japanese', category: 'language' },
-  { id: 'latin', name: 'Latin', category: 'language' },
-  
-  // Sciences
-  { id: 'biology', name: 'Biology', category: 'science' },
-  { id: 'chemistry', name: 'Chemistry', category: 'science' },
-  { id: 'physics', name: 'Physics', category: 'science' },
-  { id: 'agricultural-science', name: 'Agricultural Science', category: 'science' },
-  { id: 'applied-maths', name: 'Applied Mathematics', category: 'science' },
-  
-  // Humanities
-  { id: 'history', name: 'History', category: 'humanities' },
-  { id: 'geography', name: 'Geography', category: 'humanities' },
-  { id: 'economics', name: 'Economics', category: 'humanities' },
-  { id: 'politics', name: 'Politics & Society', category: 'humanities' },
-  { id: 'classical-studies', name: 'Classical Studies', category: 'humanities' },
-  { id: 'religious-education', name: 'Religious Education', category: 'humanities' },
-  
-  // Business
-  { id: 'business', name: 'Business', category: 'business' },
-  { id: 'accounting', name: 'Accounting', category: 'business' },
-  
-  // Practical
-  { id: 'art', name: 'Art', category: 'practical' },
-  { id: 'music', name: 'Music', category: 'practical' },
-  { id: 'pe', name: 'Physical Education', category: 'practical' },
-  { id: 'home-economics', name: 'Home Economics', category: 'practical' },
-  { id: 'construction', name: 'Construction Studies', category: 'practical' },
-  { id: 'dcg', name: 'Design & Communication Graphics', category: 'practical' },
-  { id: 'engineering', name: 'Engineering', category: 'practical' },
-  { id: 'technology', name: 'Technology', category: 'practical' }
-]
+// Re-export OAuth functions
+export { signInWithGoogle } from './auth/oauth'
+
+// Re-export onboarding functions
+export { saveOnboardingStep, completeOnboarding } from './user-profile'
 
 // Helper function to validate Supabase configuration
 function validateSupabaseConfig(): { success: boolean; error?: AuthError } {
@@ -183,40 +140,6 @@ export async function resendVerificationEmail(email: string): Promise<AuthResult
   }
 }
 
-// Sign in with Google OAuth
-export async function signInWithGoogle(): Promise<AuthResult<{ provider: string; url: string } | null>> {
-  try {
-    const configCheck = validateSupabaseConfig()
-    if (!configCheck.success) {
-      return configCheck
-    }
-    
-    const supabase = createClient()
-    
-    // Use dynamic redirect URL for development, fallback to env variable for production
-    const redirectUrl = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/callback`
-      : `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl
-      }
-    })
-
-    if (error) {
-      return { success: false, error: { message: error.message } }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: { message: 'Failed to sign in with Google. Please try again.' } 
-    }
-  }
-}
 
 // Sign in with email and password
 export async function signInWithEmailPassword({ email, password }: SignUpData): Promise<AuthResult> {
@@ -257,120 +180,6 @@ export async function signInWithEmailPassword({ email, password }: SignUpData): 
 }
 
 
-// Validation helpers
-export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long' }
-  }
-  return { valid: true }
-}
-
-export function validateName(name: string): ValidationResult {
-  const trimmedName = name.trim()
-  
-  if (!trimmedName) {
-    return { valid: false, message: 'Please enter your name' }
-  }
-  
-  if (trimmedName.length < 2) {
-    return { valid: false, message: 'Name must be at least 2 characters long' }
-  }
-  
-  if (trimmedName.length > 50) {
-    return { valid: false, message: 'Name must be less than 50 characters' }
-  }
-  
-  return { valid: true }
-}
-
-export function validateYear(year: YearOption): ValidationResult {
-  const validYears: YearOption[] = ['1st year', '2nd year', '3rd year', '4th year', '5th year', '6th year']
-  
-  if (!validYears.includes(year)) {
-    return { valid: false, message: 'Please select a valid year' }
-  }
-  
-  return { valid: true }
-}
-
-// Save onboarding step data to database
-export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }): Promise<AuthResult> {
-  try {
-    const configCheck = validateSupabaseConfig()
-    if (!configCheck.success) {
-      return configCheck
-    }
-    
-    // Import functions from user-profile
-    const { updateUserProfile, convertSubjectsToStrings } = await import('./user-profile')
-    
-    const updates: any = {}
-    
-    if (data.name) {
-      updates.full_name = data.name
-      updates.onboarding_step = 'year'
-    }
-    
-    if (data.year) {
-      updates.year = data.year
-      updates.onboarding_step = 'subjects'
-    }
-    
-    if (data.subjects) {
-      // Convert SelectedSubject[] to string[] format for storage
-      updates.subjects = convertSubjectsToStrings(data.subjects)
-      updates.onboarding_step = 'completed'
-      updates.onboarding_completed = true
-    }
-    
-    const { error } = await updateUserProfile(userId, updates)
-
-    if (error) {
-      return { success: false, error: { message: error.message } }
-    }
-
-    return { success: true }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: { message: 'Failed to save onboarding data. Please try again.' } 
-    }
-  }
-}
-
-// Complete the onboarding process
-export async function completeOnboarding(userId: string): Promise<AuthResult> {
-  try {
-    const configCheck = validateSupabaseConfig()
-    if (!configCheck.success) {
-      return configCheck
-    }
-    
-    // Import function from user-profile
-    const { updateUserProfile } = await import('./user-profile')
-    
-    const { error } = await updateUserProfile(userId, {
-      onboarding_completed: true,
-      onboarding_step: 'completed'
-    })
-
-    if (error) {
-      return { success: false, error: { message: error.message } }
-    }
-
-    return { success: true }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: { message: 'Failed to complete onboarding. Please try again.' } 
-    }
-  }
-}
 
 // Format error messages for display
 export function formatAuthError(error: AuthError): string {

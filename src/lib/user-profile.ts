@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/client'
-import type { SelectedSubject } from '@/types'
+import type { SelectedSubject, YearOption, AuthResult } from '@/types'
 
 export interface UserProfile {
   user_id: string
@@ -84,6 +84,9 @@ export function convertStringsToSubjects(subjectStrings: string[]): SelectedSubj
   // For now, we'll just parse the format
   return subjectStrings.map(str => {
     const [id, level] = str.split(':')
+    if (!id || !level) {
+      throw new Error(`Invalid subject string format: ${str}`)
+    }
     return {
       subject: { id, name: id, category: 'core' as const }, // Simplified for now
       level: level as 'higher' | 'ordinary'
@@ -107,4 +110,62 @@ export function getOnboardingUrl(step: OnboardingStep): string {
   }
   
   return stepMap[step] || '/onboarding/name'
+}
+
+// Save onboarding step data to database
+export async function saveOnboardingStep(userId: string, data: { name?: string; year?: YearOption; subjects?: SelectedSubject[] }): Promise<AuthResult> {
+  try {
+    const updates: any = {}
+    
+    if (data.name) {
+      updates.full_name = data.name
+      updates.onboarding_step = 'year'
+    }
+    
+    if (data.year) {
+      updates.year = data.year
+      updates.onboarding_step = 'subjects'
+    }
+    
+    if (data.subjects) {
+      // Convert SelectedSubject[] to string[] format for storage
+      updates.subjects = convertSubjectsToStrings(data.subjects)
+      updates.onboarding_step = 'completed'
+      updates.onboarding_completed = true
+    }
+    
+    const { error } = await updateUserProfile(userId, updates)
+
+    if (error) {
+      return { success: false, error: { message: error.message } }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { message: 'Failed to save onboarding data. Please try again.' } 
+    }
+  }
+}
+
+// Complete the onboarding process
+export async function completeOnboarding(userId: string): Promise<AuthResult> {
+  try {
+    const { error } = await updateUserProfile(userId, {
+      onboarding_completed: true,
+      onboarding_step: 'completed'
+    })
+
+    if (error) {
+      return { success: false, error: { message: error.message } }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: { message: 'Failed to complete onboarding. Please try again.' } 
+    }
+  }
 }

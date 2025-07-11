@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { saveOnboardingStep, LEAVING_CERT_SUBJECTS } from '@/lib/auth'
+import { saveOnboardingStep } from '@/lib/auth'
+import { LEAVING_CERT_SUBJECTS } from '@/data/subjects'
 import type { User } from '@/types'
 import { useSubjectSelection } from '@/hooks/useSubjectSelection'
-import SubjectCardNew from '@/components/onboarding/SubjectCardNew'
+import SubjectCard from '@/components/onboarding/SubjectCard'
 import SelectedSubjectsPanel from '@/components/onboarding/SelectedSubjectsPanel'
 import SearchBar from '@/components/onboarding/SearchBar'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -136,7 +137,7 @@ export default function OnboardingSubjectsPage() {
                       {filteredSubjects.map((subject) => {
                         const level = getSelectedLevel(subject.id)
                         return (
-                          <SubjectCardNew
+                          <SubjectCard
                             key={subject.id}
                             subject={subject}
                             isSelected={isSubjectSelected(subject.id)}

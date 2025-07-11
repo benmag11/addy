@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { saveOnboardingStep, validateName } from '@/lib/auth'
+import { saveOnboardingStep } from '@/lib/auth'
+import { validateName } from '@/lib/validation/auth.validation'
 import type { User } from '@/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 

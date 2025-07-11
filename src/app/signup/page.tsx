@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signUpWithEmail, verifyEmail, resendVerificationEmail, signInWithGoogle, validateEmail, validatePassword, formatAuthError } from '@/lib/auth'
+import { signUpWithEmail, verifyEmail, resendVerificationEmail, signInWithGoogle, formatAuthError } from '@/lib/auth'
+import { validateEmail, validatePassword } from '@/lib/validation/auth.validation'
 import type { AuthError } from '@/types'
 import HeaderLogo from '@/components/ui/HeaderLogo'
 

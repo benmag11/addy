@@ -37,12 +37,6 @@ Addy is a modern authentication application with onboarding flow, built with Nex
 - `src/utils/supabase/*` - SSR-compatible Supabase clients
 - `middleware.ts` - Auth state and onboarding redirects
 
-### Supabase Database
-- **user_profiles** table with RLS policies
-- Auto-creation via database trigger
-- Fields: `user_id`, `full_name`, `year`, `subjects[]`, `onboarding_completed`, `onboarding_step`
-- Subject format: `"subject_id:level"` strings
-
 ## Setup Requirements
 
 ### Environment Variables (.env.local)
@@ -52,21 +46,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-### Database Setup
-1. Run migration: `supabase/migrations/20240101000000_user_profiles_onboarding.sql`
-2. Verify with: `SELECT * FROM public.user_profiles LIMIT 1;`
-
-### Google OAuth Setup
-1. **Supabase**: Authentication > Providers > Enable Google
-2. **Google Console**: Create OAuth credentials with redirect to Supabase
-3. Test: `node scripts/puppeteer/test-google-oauth.js`
-
 ## Design System
 - **Typography**: SF Pro, normal weight
 - **Colors**: Primary blue `#0275DE`, background `#F2F9FF`
 - **Responsive**: Mobile-first, 768px breakpoint
-- **Subject Selection**: 6-14 subjects required, CSS Grid layout
-
+- **Subject Selection**: 6-14 subjects required, CSS Grid layoutno
 ## Testing Strategy
 
 ### Critical Test Scenarios

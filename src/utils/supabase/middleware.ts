@@ -57,9 +57,6 @@ export async function updateSession(request: NextRequest) {
       .single()
     
     const isOnboardingPath = request.nextUrl.pathname.startsWith('/onboarding')
-    const isCompletedPath = ['/welcome', '/dashboard'].some(path => 
-      request.nextUrl.pathname.startsWith(path)
-    )
     
     if (profile) {
       // Determine actual onboarding step based on data
